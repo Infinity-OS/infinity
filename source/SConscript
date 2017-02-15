@@ -13,6 +13,9 @@ for (k, v) in config.items():
 				raise Exception, "Unsupported type %s in config" % (type(v))
 f.close()
 
+# Get the distribution environment
+dist = manager['dist']
+
 ################################################################################
 # Initium build                                                                #
 ################################################################################
@@ -42,3 +45,31 @@ defaults = []
 SConscript(dirs = ['boot'], exports = {
     'env': env, 'defaults': defaults, 'config': config, 'dirs': ['source']
 })
+
+# Put stuff into the distribution environment
+dist['LOADER'] = File('bin/initium.bin')
+if config['PLATFORM'] == 'bios':
+	dist['CDBOOT'] = File('bin/cdboot.img')
+
+################################################################################
+# Image build                                                                  #
+################################################################################
+
+# Always build the filesystem image to make sure new struff is copied into it
+fsimage = dist.FSImage('fsimage.tar', [])
+AlwaysBuild(fsimage)
+
+# Add alias and set the default target
+Alias('loader', dist['LOADER'])
+Alias('fsimage', fsimage)
+
+# Add platform-specific targets to generate bootable images
+if config['PLATFORM'] == 'bios':
+	Default(Alias('cdrom', dist.ISOImage('cdrom.iso', fsimage)))
+
+	# Target to run in QEMU
+	Alias('qemu', dist.Command('__qemu', ['cdrom.iso'], Action(
+		config['QEMU_BINARY'] + ' -cdrom $SOURCE -boot d ' + config['QEMU_OPTS'],
+		None)))
+else:
+	Default(dist['LOADER'])

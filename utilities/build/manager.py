@@ -1,5 +1,5 @@
 from SCons.Script import *
-import builders
+import builders, image
 
 class BuildManager:
 	def __init__(self, host_template, target_template):
@@ -49,8 +49,8 @@ class BuildManager:
 		dist.AddMethod(add_link_method, 'AddLink')
 
 		# Add image builders.
-		# dist['BUILDERS']['FSImage'] = image.fs_image_builder
-		# dist['BUILDERS']['ISOImage'] = image.iso_image_builder
+		dist['BUILDERS']['FSImage'] = image.fs_image_builder
+		dist['BUILDERS']['ISOImage'] = image.iso_image_builder
 
 	def __getitem__(self, key):
 		"""Get an environment by name."""

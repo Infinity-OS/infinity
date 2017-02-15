@@ -32,6 +32,13 @@ config QEMU_OPTS
 	help
 	  Extra options to pass to QEMU.
 
+config EXTRA_FSIMAGE
+	string "Extra filesystem image contents"
+	default ""
+	help
+	  Path to a directory containing extra files to copy in to the generated
+	  filesystem image.
+
 #######
 endmenu
 #######

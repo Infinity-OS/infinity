@@ -18,4 +18,7 @@ $ scons toolchain
 
 # Build Infinity OS
 $ scons
+
+# Build the changes and run on Qemu
+$ scons qemu
 ```
