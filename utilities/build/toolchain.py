@@ -217,42 +217,6 @@ class CompilerRTComponent(ToolchainComponent):
                 os.path.join(self.manager.genericdir, 'lib', 'clang', self.version,
                     'libclang_rt.%s.a' % arch))
 
-# Component definition for GCC.
-class GCCComponent(ToolchainComponent):
-    name = 'gcc'
-    version = '4.8.1'
-    generic = False
-    source = [
-        'http://ftp.gnu.org/gnu/gcc/gcc-' + version + '/gcc-' + version + '.tar.bz2',
-    ]
-    patches = [
-        ('gcc-' + version + '-no-fixinc.patch', 'gcc-' + version, 1),
-        ('gcc-' + version + '-pulsar.patch', 'gcc-' + version, 1),
-    ]
-
-    def build(self):
-        self.patch()
-
-        # Work out configure options to use.
-        env = ""
-        confopts  = '--prefix=%s ' % (self.destdir)
-        confopts += '--target=%s ' % (self.manager.target)
-        confopts += '--enable-languages=c,c++ '
-        confopts += '--with-sysroot=%s ' % (os.path.join(self.destdir, 'sysroot'))
-        confopts += '--with-newlib '
-        confopts += '--disable-libstdcxx-pch '
-        confopts += '--disable-shared '
-        if os.uname()[0] == 'Darwin':
-            env = "CC=clang CXX=clang++ "
-            confopts += '--with-libiconv-prefix=/opt/local --with-gmp=/opt/local --with-mpfr=/opt/local'
-
-        # Build and install it.
-        os.mkdir('gcc-build')
-        self.execute('%s../gcc-%s/configure %s' % (env, self.version, confopts), 'gcc-build')
-        self.execute('make -j%d all-gcc' % (self.manager.makejobs), 'gcc-build')
-        self.execute('make -j%d all-target-libgcc' % (self.manager.makejobs), 'gcc-build')
-        self.execute('make install-gcc install-target-libgcc', 'gcc-build')
-
 # Base class for a toolchain.
 class Toolchain:
     def pre_update(self, manager):
@@ -297,14 +261,6 @@ class LLVMToolchain(Toolchain):
         except:
             pass
 
-# GCC-based toolchain.
-class GCCToolchain(Toolchain):
-    def __init__(self, manager):
-        self.components = [
-            BinutilsComponent(manager),
-            GCCComponent(manager),
-        ]
-
 # Class to manage building and updating the toolchain.
 class ToolchainManager:
     def __init__(self, config):
@@ -321,10 +277,7 @@ class ToolchainManager:
 
         self.totaltime = 0
 
-        if config['TOOLCHAIN_LLVM']:
-            self.toolchain = LLVMToolchain(self)
-        else:
-            self.toolchain = GCCToolchain(self)
+        self.toolchain = LLVMToolchain(self)
 
     # Set up the toolchain sysroot.
     def update_sysroot(self, manager):
