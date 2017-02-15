@@ -1,0 +1,4 @@
+Import('env')
+
+# Visit subdirectories
+SConscript(dirs = ['kconfig'], exports = ['env'])

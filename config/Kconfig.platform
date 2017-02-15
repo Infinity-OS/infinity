@@ -1,0 +1,53 @@
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Gil Mendes <gil00mendes@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+choice
+    prompt "Platform"
+
+config PLATFORM_BIOS
+    bool "Standard PC"
+    select 32BIT
+    help
+        Target Initium to run on standard PCs (nearly all x86 computers).
+
+config PLATFORM_EFI
+    bool "Modern UEFI PCs"
+    select 64BIT
+    select EFI_ARCH_AMD64
+    help
+        Target Initium to run on EFI and UEFI computers (including Macintosh).
+
+endchoice
+
+config PLATFORM
+    string
+    default "bios" if PLATFORM_BIOS
+    default "efi" if PLATFORM_EFI
+
+config EFI_ARCH_AMD64
+    bool
+
+config EFI_ARCH
+    string
+    default "amd64" if PLATFORM_EFI

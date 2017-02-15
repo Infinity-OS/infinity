@@ -1,0 +1,416 @@
+diff -urN gcc-4.8.1.orig/config.sub gcc-4.8.1/config.sub
+--- gcc-4.8.1.orig/config.sub	2013-10-07 14:54:46.000000000 +0100
++++ gcc-4.8.1/config.sub	2013-10-07 14:56:44.000000000 +0100
+@@ -1378,7 +1378,7 @@
+ 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+ 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+ 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -pulsar*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+diff -urN gcc-4.8.1.orig/gcc/config/arm/pulsar.h gcc-4.8.1/gcc/config/arm/pulsar.h
+--- gcc-4.8.1.orig/gcc/config/arm/pulsar.h	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/arm/pulsar.h	2013-10-07 14:56:44.000000000 +0100
+@@ -0,0 +1,43 @@
++/* Definitions for Pulsar ARM targets
++   Copyright (C) 2007, Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++/* We want both the BPABI builtins and the Pulsar builtins. */
++#undef  TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS() 		\
++  do 						\
++    {						\
++      TARGET_BPABI_CPP_BUILTINS();		\
++      PULSAR_TARGET_OS_CPP_BUILTINS();		\
++    }						\
++  while (false)
++
++#define PULSAR_LINK_SPEC " \
++  %{shared:-shared} \
++  %{symbolic:-Bsymbolic} \
++  %{mbig-endian:-EB} %{mlittle-endian:-EL} \
++  -X \
++  %{!shared: \
++    %{!static: \
++      %{rdynamic:-export-dynamic} \
++      %{!dynamic-linker:-dynamic-linker /system/lib/libkernel.so}} \
++    %{static:-Bstatic}}"
++
++/* Include BPABI link spec as well as our own. */
++#undef  LINK_SPEC
++#define LINK_SPEC PULSAR_LINK_SPEC BE8_LINK_SPEC
+diff -urN gcc-4.8.1.orig/gcc/config/arm/t-pulsar gcc-4.8.1/gcc/config/arm/t-pulsar
+--- gcc-4.8.1.orig/gcc/config/arm/t-pulsar	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/arm/t-pulsar	2013-10-07 14:56:44.000000000 +0100
+@@ -0,0 +1,2 @@
++# These functions are included in shared libraries.
++TARGET_LIBGCC2_CFLAGS = -fPIC
+diff -urN gcc-4.8.1.orig/gcc/config/i386/pulsar32.h gcc-4.8.1/gcc/config/i386/pulsar32.h
+--- gcc-4.8.1.orig/gcc/config/i386/pulsar32.h	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/i386/pulsar32.h	2013-10-07 14:56:44.000000000 +0100
+@@ -0,0 +1,28 @@
++/* Definitions for Pulsar i386 targets
++   Copyright (C) 2007, Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++#undef  LINK_SPEC
++#define LINK_SPEC "%{m64:-m elf_x86_64} %{!m64:-m elf_i386} \
++  %{shared:-shared} \
++  %{!shared: \
++    %{!static: \
++      %{rdynamic:-export-dynamic} \
++      %{m64:%{!dynamic-linker:-dynamic-linker /system/lib/libkernel.so}} \
++      %{!m64:%{!dynamic-linker:-dynamic-linker /system/lib/libkernel.so}}} \
++    %{static:-static}}"
+diff -urN gcc-4.8.1.orig/gcc/config/i386/pulsar64.h gcc-4.8.1/gcc/config/i386/pulsar64.h
+--- gcc-4.8.1.orig/gcc/config/i386/pulsar64.h	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/i386/pulsar64.h	2013-10-07 14:56:44.000000000 +0100
+@@ -0,0 +1,28 @@
++/* Definitions for Pulsar x86-64 targets
++   Copyright (C) 2007, Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++#undef  LINK_SPEC
++#define LINK_SPEC "%{!m32:-m elf_x86_64} %{m32:-m elf_i386} \
++  %{shared:-shared} \
++  %{!shared: \
++    %{!static: \
++      %{rdynamic:-export-dynamic} \
++      %{!m32:%{!dynamic-linker:-dynamic-linker /system/lib/libkernel.so}} \
++      %{m32:%{!dynamic-linker:-dynamic-linker /system/lib/libkernel.so}}} \
++    %{static:-static}}"
+diff -urN gcc-4.8.1.orig/gcc/config/i386/t-pulsar64 gcc-4.8.1/gcc/config/i386/t-pulsar64
+--- gcc-4.8.1.orig/gcc/config/i386/t-pulsar64	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/i386/t-pulsar64	2013-10-07 14:56:44.000000000 +0100
+@@ -0,0 +1,3 @@
++MULTILIB_OPTIONS = m64/m32
++MULTILIB_DIRNAMES = 64 32
++MULTILIB_OSDIRNAMES = ../lib ../lib32
+diff -urN gcc-4.8.1.orig/gcc/config/pulsar.h gcc-4.8.1/gcc/config/pulsar.h
+--- gcc-4.8.1.orig/gcc/config/pulsar.h	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/pulsar.h	2013-10-07 15:33:07.000000000 +0100
+@@ -0,0 +1,64 @@
++/* Definitions for Pulsar targets
++   Copyright (C) 2007-2013, Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++/* Specify predefined symbols in preprocessor.  */
++#undef  PULSAR_TARGET_OS_CPP_BUILTINS
++#define PULSAR_TARGET_OS_CPP_BUILTINS()		\
++	do {					\
++		builtin_define ("__Pulsar__");	\
++	} while (0)
++
++#undef  TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()		\
++	PULSAR_TARGET_OS_CPP_BUILTINS()
++
++#undef  STARTFILE_SPEC
++#define STARTFILE_SPEC \
++  "%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}} \
++   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
++
++#undef  ENDFILE_SPEC
++#define ENDFILE_SPEC \
++  "%{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
++
++#undef  LIB_SPEC
++#define LIB_SPEC "-lsystem"
++
++/* Make no assumptions about header files. */
++#define NO_IMPLICIT_EXTERN_C 1
++
++/* Override libstdc++. */
++#define LIBSTDCXX "c++"
++
++/* Header paths. */
++#define INCLUDE_DEFAULTS \
++  { \
++    { GCC_INCLUDE_DIR, "GCC", 0, 0, 0, 0 }, \
++    { TOOL_INCLUDE_DIR, "BINUTILS", 0, 1, 0, 0 }, \
++    { "/system/include", 0, 0, 0, 1, 0 }, \
++    { "/include", 0, 0, 0, 1, 0 }, \
++    { 0, 0, 0, 0, 0, 0 } \
++  }
++
++#undef STANDARD_STARTFILE_PREFIX_1
++#undef STANDARD_STARTFILE_PREFIX_2
++#undef MD_STARTFILE_PREFIX
++
++#define STANDARD_STARTFILE_PREFIX_1	"/lib/"
++#define STANDARD_STARTFILE_PREFIX_2	"/system/lib/"
+diff -urN gcc-4.8.1.orig/gcc/config/mips/pulsar.h gcc-4.8.1/gcc/config/mips/pulsar.h
+--- gcc-4.8.1.orig/gcc/config/mips/pulsar.h	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/mips/pulsar.h	2013-10-07 15:56:59.000000000 +0100
+@@ -0,0 +1,65 @@
++/* Target macros for Pulsar MIPS targets.
++   Copyright (C) 2012-2013 Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++#undef DRIVER_SELF_SPECS
++#define DRIVER_SELF_SPECS						\
++  /* Make sure a -mips option is present.  This helps us to pick	\
++     the right multilib, and also makes the later specs easier		\
++     to write.  */							\
++  MIPS_ISA_LEVEL_SPEC,							\
++									\
++  /* Infer the default float setting from -march.  */			\
++  MIPS_ARCH_FLOAT_SPEC,							\
++									\
++  /* Infer the -msynci setting from -march if not explicitly set.  */	\
++  MIPS_ISA_SYNCI_SPEC,							\
++									\
++  /* If no ABI option is specified, infer one from the ISA level	\
++     or -mgp setting.  */						\
++  "%{!mabi=*: %{" MIPS_32BIT_OPTION_SPEC ": -mabi=32;: -mabi=n32}}",	\
++									\
++  /* Make sure that an endian option is always present.  This makes	\
++     things like LINK_SPEC easier to write.  */				\
++  "%{!EB:%{!EL:%(endian_spec)}}",					\
++									\
++  /* Configuration-independent MIPS rules.  */				\
++  BASE_DRIVER_SELF_SPECS
++
++#undef  LINK_SPEC
++#define LINK_SPEC \
++ "%(endian_spec) \
++  %{shared:-shared} \
++  %{!shared: \
++    %{!static: \
++      %{rdynamic:-export-dynamic} \
++      -dynamic-linker /system/lib/libkernel.so} \
++      %{static:-static}}"
++
++/* -G is incompatible with -KPIC which is the default, so only allow objects
++   in the small data section if the user explicitly asks for it.  */
++#undef MIPS_DEFAULT_GVALUE
++#define MIPS_DEFAULT_GVALUE 0
++
++#undef SUBTARGET_ASM_SPEC
++#define SUBTARGET_ASM_SPEC \
++  "%{!mno-abicalls:%{mplt:-call_nonpic;:-KPIC}}"
++
++/* If we don't set MASK_ABICALLS, we can't default to PIC.  */
++#undef TARGET_DEFAULT
++#define TARGET_DEFAULT MASK_ABICALLS
+diff -urN gcc-4.8.1.orig/gcc/config/mips/t-pulsar gcc-4.8.1/gcc/config/mips/t-pulsar
+--- gcc-4.8.1.orig/gcc/config/mips/t-pulsar	1970-01-01 01:00:00.000000000 +0100
++++ gcc-4.8.1/gcc/config/mips/t-pulsar	2013-10-07 14:58:23.000000000 +0100
+@@ -0,0 +1,21 @@
++# Copyright (C) 2012-2013 Free Software Foundation, Inc.
++#
++# This file is part of GCC.
++#
++# GCC is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3, or (at your option)
++# any later version.
++#
++# GCC is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with GCC; see the file COPYING3.  If not see
++# <http://www.gnu.org/licenses/>.
++
++MULTILIB_OPTIONS = msoft-float EB
++MULTILIB_DIRNAMES = soft-float eb
++MULTILIB_MATCHES = EL=mel EB=meb
+diff -urN gcc-4.8.1.orig/gcc/config.gcc gcc-4.8.1/gcc/config.gcc
+--- gcc-4.8.1.orig/gcc/config.gcc	2013-10-07 14:54:50.000000000 +0100
++++ gcc-4.8.1/gcc/config.gcc	2013-10-07 14:56:44.000000000 +0100
+@@ -810,6 +810,12 @@
+   default_use_cxa_atexit=yes
+   use_gcc_stdint=wrap
+   ;;
++*-*-pulsar*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  tmake_file="t-svr4"
++  ;;
+ esac
+ 
+ case ${target} in
+@@ -902,7 +908,7 @@
+ 	# The EABI requires the use of __cxa_atexit.
+ 	default_use_cxa_atexit=yes
+ 	;;
+-arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-rtems*)
++arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-rtems* | arm*-*-pulsar*)
+ 	case ${target} in
+ 	arm*eb-*-eabi*)
+ 	  tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1"
+@@ -920,6 +926,10 @@
+ 	  tmake_file="${tmake_file} arm/t-bpabi"
+ 	  use_gcc_stdint=wrap
+ 	  ;;
++	arm*-*-pulsar*)
++	  tm_file="${tm_file} pulsar.h arm/pulsar.h"
++	  tmake_file="${tmake_file} arm/t-bpabi"
++	  ;;
+ 	arm*-*-rtems*)
+ 	  tm_file="${tm_file} rtems.h arm/rtems-eabi.h newlib-stdint.h"
+ 	  tmake_file="${tmake_file} arm/t-bpabi t-rtems arm/t-rtems-eabi"
+@@ -1549,6 +1559,13 @@
+ 		tm_file="${tm_file} dbxcoff.h"
+ 	fi
+ 	;;
++i[34567]86-*-pulsar*)
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h pulsar.h i386/pulsar32.h"
++	;;
++x86_64-*-pulsar*)
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h pulsar.h i386/x86-64.h i386/pulsar64.h"
++	tmake_file="${tmake_file} i386/t-pulsar64"
++	;;
+ ia64*-*-elf*)
+ 	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ia64/sysv4.h ia64/elf.h"
+ 	tmake_file="ia64/t-ia64"
+@@ -1786,6 +1803,11 @@
+ 	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h"
+ 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+ 	;;
++mips*-*-pulsar*)
++	tm_file="dbxelf.h elfos.h ${tm_file} mips/elf.h pulsar.h mips/pulsar.h"
++	tmake_file="${tmake_file} mips/t-pulsar"
++	tm_defines="${tm_defines} MIPS_ISA_DEFAULT=33 MIPS_ABI_DEFAULT=ABI_32"
++	;;
+ mips*-mti-linux*)
+ 	tm_file="dbxelf.h elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} mips/gnu-user.h mips/gnu-user64.h mips/linux64.h mips/linux-common.h mips/mti-linux.h"
+ 	tmake_file="${tmake_file} mips/t-mti-linux"
+diff -urN gcc-4.8.1.orig/libgcc/config.host gcc-4.8.1/libgcc/config.host
+--- gcc-4.8.1.orig/libgcc/config.host	2013-10-07 14:55:15.000000000 +0100
++++ gcc-4.8.1/libgcc/config.host	2013-10-07 14:56:44.000000000 +0100
+@@ -195,6 +195,10 @@
+       ;;
+   esac
+   ;;
++*-*-pulsar*)
++  tmake_file="$tmake_file t-crtstuff-pic t-libgcc-pic"
++  extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o"
++  ;;
+ *-*-linux* | frv-*-*linux* | *-*-kfreebsd*-gnu | *-*-knetbsd*-gnu | *-*-gnu* | *-*-kopensolaris*-gnu)
+   tmake_file="$tmake_file t-crtstuff-pic t-libgcc-pic t-eh-dw2-dip t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver t-linux"
+   extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o"
+@@ -337,7 +341,7 @@
+ 	tmake_file="$tmake_file arm/t-arm arm/t-elf t-softfp-sfdf t-softfp-excl arm/t-softfp t-softfp"
+ 	extra_parts="$extra_parts crti.o crtn.o"
+ 	;;
+-arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-rtems*)
++arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-rtems* | arm*-*-pulsar*)
+ 	tmake_file="${tmake_file} arm/t-arm arm/t-elf t-fixedpoint-gnu-prefix"
+ 	tm_file="$tm_file arm/bpabi-lib.h"
+ 	case ${host} in
+@@ -345,6 +349,9 @@
+ 	  tmake_file="${tmake_file} arm/t-bpabi"
+ 	  extra_parts="crtbegin.o crtend.o crti.o crtn.o"
+ 	  ;;
++	arm*-*-pulsar*)
++	  tmake_file="${tmake_file} arm/t-bpabi"
++	  ;;
+ 	arm*-*-symbianelf*)
+ 	  tmake_file="${tmake_file} arm/t-symbian t-slibgcc-nolc-override"
+ 	  tm_file="$tm_file arm/symbian-lib.h"
+@@ -507,6 +514,12 @@
+ x86_64-*-freebsd*)
+ 	tmake_file="${tmake_file} i386/t-freebsd i386/t-crtstuff"
+ 	;;
++i[34567]86-*-pulsar*)
++	tmake_file="${tmake_file} i386/t-crtstuff"
++	;;
++x86_64-*-pulsar*)
++	tmake_file="${tmake_file} i386/t-crtstuff"
++	;;
+ i[34567]86-*-netbsdelf*)
+ 	;;
+ x86_64-*-netbsd*)
+@@ -776,6 +789,9 @@
+ 	tmake_file="$tmake_file mips/t-elf mips/t-crtstuff mips/t-mips16"
+ 	extra_parts="$extra_parts crti.o crtn.o"
+ 	;;
++mips*-*-pulsar*)
++	tmake_file="$tmake_file mips/t-elf mips/t-crtstuff"
++	;;
+ mips-wrs-vxworks)
+ 	;;
+ mipstx39-*-elf* | mipstx39el-*-elf*)

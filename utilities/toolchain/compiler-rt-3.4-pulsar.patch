@@ -1,0 +1,89 @@
+diff -urN compiler-rt-3.4.orig/lib/int_endianness.h compiler-rt-3.4/lib/int_endianness.h
+--- compiler-rt-3.4.orig/lib/int_endianness.h	2014-02-01 12:49:17.000000000 +0000
++++ compiler-rt-3.4/lib/int_endianness.h	2014-02-01 12:49:28.000000000 +0000
+@@ -95,6 +95,20 @@
+
+ #endif /* GNU/Linux */
+
++/* .. */
++
++#if defined(__Pulsar__)
++
++#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
++#define _YUGA_LITTLE_ENDIAN 0
++#define _YUGA_BIG_ENDIAN    1
++#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++#define _YUGA_LITTLE_ENDIAN 1
++#define _YUGA_BIG_ENDIAN    0
++#endif
++
++#endif /* Pulsar */
++
+ #if defined(_WIN32)
+
+ #define _YUGA_LITTLE_ENDIAN 1
+diff -urN compiler-rt-3.4.orig/make/platform/clang_pulsar.mk compiler-rt-3.4/make/platform/clang_pulsar.mk
+--- compiler-rt-3.4.orig/make/platform/clang_pulsar.mk	1970-01-01 01:00:00.000000000 +0100
++++ compiler-rt-3.4/make/platform/clang_pulsar.mk	2014-02-01 12:50:58.000000000 +0000
+@@ -0,0 +1,61 @@
++Description := Static runtime libraries for clang/Pulsar.
++
++###
++
++CC := clang
++Arch := unknown
++Configs :=
++
++# We don't currently have any general purpose way to target architectures other
++# than the compiler defaults (because there is no generalized way to invoke
++# cross compilers). For now, we just find the target archicture of the compiler
++# and only define configurations we know that compiler can generate.
++CompilerTargetTriple := $(shell \
++	$(CC) -v 2>&1 | grep 'Target:' | cut -d' ' -f2)
++ifeq ($(CompilerTargetTriple),)
++$(error "unable to infer compiler target triple for $(CC)")
++endif
++
++# Only define configs if we detected a Pulsar target.
++ifneq ($(findstring -pulsar,$(CompilerTargetTriple)),)
++
++Configs := $(firstword $(subst -, ,$(CompilerTargetTriple)))
++
++# Build 32-bit libraries on x86_64.
++ifeq ($(Configs),x86_64)
++  Configs += i386
++endif
++
++endif
++
++
++###
++
++
++CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer --sysroot=$(ProjSrcRoot)/SDKs/linux
++
++# Configuration for i386.
++Arch.i386 := i386
++CFLAGS.i386 := $(CFLAGS) -m32
++FUNCTIONS.i386 := $(CommonFunctions) $(ArchFunctions.i386)
++
++# Configuration for x86_64.
++Arch.x86_64 := x86_64
++CFLAGS.x86_64 := $(CFLAGS) -m64
++FUNCTIONS.x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
++
++#Â Configuration for ARM.
++Arch.arm := arm
++CFLAGS.arm = $(CFLAGS) -march=armv6 -mfpu=vfp -mfloat-abi=softfp
++FUNCTIONS.arm = $(call set_difference, $(CommonFunctions), clear_cache) \
++	aeabi_ldivmod \
++	aeabi_uldivmod \
++	aeabi_memset \
++	aeabi_memmove \
++	aeabi_memcpy
++
++# Always use optimized variants.
++OPTIMIZED := 1
++
++# We don't need to use visibility hidden on Linux.
++VISIBILITY_HIDDEN := 0

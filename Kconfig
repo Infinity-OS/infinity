@@ -1,0 +1,58 @@
+mainmenu "Infinity OS Configuration"
+
+config KERNELVERSION
+		string
+	option env="KERNELVERSION"
+
+####################
+menu "Build options"
+####################
+
+config TOOLCHAIN_DIR
+	string "Toolchain directory"
+	default "/please/change/me"
+	help
+		Path to directory to store toolchain downloads and builds in.
+
+config TOOLCHAIN_MAKE_JOBS
+	int "Toolchain parallel build jobs"
+	default 4
+	help
+	  Argument to pass to -j for make when building the toolchain.
+
+config QEMU_BINARY
+	string "QEMU binary"
+	default "qemu-system-x86_64"
+	help
+	  Path to the QEMU binary to use for the qtest build target.
+
+config QEMU_OPTS
+	string "Extra QEMU options"
+	default "-serial stdio -vga std -s -localtime -m 256"
+	help
+	  Extra options to pass to QEMU.
+
+#######
+endmenu
+#######
+
+comment "Target system"
+
+source "config/Kconfig.arch"
+source "config/Kconfig.platform"
+
+comment "System configuration"
+
+config DEBUG
+	bool "Debug build"
+	default y
+	help
+		Enable various sections of debugging code and extra checks. For the
+		kernel, this enables assertions and messages with the LOG_DEBUG log
+		level. It also disable the boot splash screen by default. The build
+		system will generally be slower, so don't enable it unless you are
+		doing kernel development or have another reason to.
+
+menu "Initium configuration"
+source "source/boot/source/Kconfig"
+endmenu
