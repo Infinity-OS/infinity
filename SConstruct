@@ -111,7 +111,7 @@ manager.AddVariable('_CONFIG', config)
 Export('config', 'manager')
 
 # Add compiler-specific flags.
-output = Popen([host_env['CC'], '--version'], stdout=PIPE, stderr=PIPE).communicate()[0].strip()
+output = Popen(["clang", "--version"], stdout=PIPE).communicate()[0]
 host_env['IS_CLANG'] = output.find('clang') >= 0
 if host_env['IS_CLANG']:
     for (k, v) in clang_flags.items():
