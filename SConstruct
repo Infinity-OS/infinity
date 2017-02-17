@@ -192,6 +192,9 @@ target_env['RANLIB']  = toolchain.tool_path('ranlib')
 target_env['OBJCOPY'] = toolchain.tool_path('objcopy')
 target_env['LD']      = toolchain.tool_path('ld')
 
+# TODO: we must recompile de rust to add support to Pulsar targets
+target_env['CARGO']   = 'cargo'
+
 # Build the target system
 SConscript('source/SConscript', variant_dir = os.path.join('build',
     '%s-%s' % (config['ARCH'], config['PLATFORM'])))

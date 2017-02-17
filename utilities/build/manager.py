@@ -31,9 +31,11 @@ class BuildManager:
 		self.AddVariable('GENCOMSTR', 		compile_string('GEN', 		'$TARGET'))
 		self.AddVariable('STRIPCOMSTR', 	compile_string('STRIP', 	'$TARGET'))
 		self.AddVariable('DCOMSTR', 		compile_string('D', 		'$TARGET'))
+		self.AddVariable('CARGOCOMSTR', 	compile_string('CARGO', 	'$TARGET'))
 
-		# Add builders from builders.py
+		# Add some extra Builders
 		self.AddBuilder('LDScript', builders.ld_script_builder)
+		self.AddBuilder('RunCargo', builders.cargo_builder)
 
 		# Create the distribution environment and various methods to add data
 		# to an image.

@@ -67,18 +67,21 @@ def iso_image_func(target, source, env):
     fsimage = str(source[-1])
     cdboot = str(env['CDBOOT'])
     loader = str(env['LOADER'])
+    kernel = str(env['KERNEL'])
 
     # Create the work directory
     tmpdir = tempfile.mkdtemp('.infinityiso')
     os.makedirs(os.path.join(tmpdir, 'boot'))
 
     # Copy struff into it
+    shutil.copy(kernel, os.path.join(tmpdir, 'pulsar'))
     shutil.copy(fsimage, os.path.join(tmpdir, 'pulsar'))
 
     # Write the configuration file
     f = open(os.path.join(tmpdir, 'boot', 'loader.cfg'), 'w')
     f.write('set "timeout" 5\n')
     f.write('entry "Infinity OS" {\n')
+    f.write('   initium "/pulsar/kernel"\n')
     f.write('}\n')
     f.close()
 
@@ -104,7 +107,7 @@ def iso_image_func(target, source, env):
 
 def iso_image_emitter(target, source, env):
     assert len(source) == 1
-    return (target, [env['LOADER'], env['CDBOOT']] + source)
+    return (target, [env['KERNEL'], env['LOADER'], env['CDBOOT']] + source)
 
 # Create a builder for the ISO
 iso_image_builder = Builder(action = Action(iso_image_func, '$GENCOMSTR'), emitter = iso_image_emitter)

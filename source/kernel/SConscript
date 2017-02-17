@@ -1,0 +1,21 @@
+Import('manager', 'config')
+
+from util import FeatureSources
+import os, shutil
+
+# Create the kernel environment
+env = manager.CreateBare(name = 'kernel', flags = {
+    'CARGOFLAGS': []
+})
+
+# Copy the src file
+try:
+    os.symlink(Dir('src').srcnode().abspath, Dir('src').abspath)
+except Exception as e:
+    pass
+
+# Build Cargo crate
+env.RunCargo('kernel', 'Cargo.toml')
+
+# Let the distribution environment know where the kernel is.
+manager['dist']['KERNEL'] = File('kernel')
