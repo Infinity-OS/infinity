@@ -59,7 +59,7 @@ target_flags = {
         '-fno-optimize-sibling-calls'
     ],
     'ASFLAGS': ['-nostdinc'],
-    'LINKFLAGS': ['-nostdlib', '-Wl,--build-id=none'],
+    'LINKFLAGS': [],
 }
 
 ################################################################################

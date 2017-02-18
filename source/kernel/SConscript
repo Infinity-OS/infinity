@@ -15,7 +15,28 @@ except Exception as e:
     pass
 
 # Build Cargo crate
-env.RunCargo('kernel', 'Cargo.toml')
+kernel = env.RunCargo('kernel.o', 'Cargo.toml')
+
+## Link the kernel
+# Get the linker script location
+env['LDSCRIPT'] = File('arch/' + config['ARCH'] + '/linker.ld')
+
+# Performe the link operation
+env.Command(
+    'kernel-unstripped',
+    kernel,
+    Action('$LD --gc-sections -T $LDSCRIPT -o $TARGET $SOURCE'))
+
+# The kernel-unstripped target depends on the linker script
+Depends('kernel-unstripped', env['LDSCRIPT'])
+
+# Generate various information files and the stripped kernel image.
+env.Command(['kernel', 'kernel.lst', 'kernel.rde', 'kernel.sym'], 'kernel-unstripped', [
+    Action('$STRIP --strip-debug $SOURCE -o ${TARGETS[0]}', '$GENCOMSTR'),
+    Action('$OBJDUMP -d $SOURCE > ${TARGETS[1]}', None),
+    Action('$READELF -aW $SOURCE > ${TARGETS[2]}', None),
+    Action('$NM -C $SOURCE | sort > ${TARGETS[3]}', None),
+])
 
 # Let the distribution environment know where the kernel is.
 manager['dist']['KERNEL'] = File('kernel')
