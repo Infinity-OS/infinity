@@ -72,6 +72,7 @@ def iso_image_func(target, source, env):
     # Create the work directory
     tmpdir = tempfile.mkdtemp('.infinityiso')
     os.makedirs(os.path.join(tmpdir, 'boot'))
+    os.makedirs(os.path.join(tmpdir, 'pulsar'))
 
     # Copy struff into it
     shutil.copy(kernel, os.path.join(tmpdir, 'pulsar'))
