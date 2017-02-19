@@ -3,10 +3,33 @@ Import('manager', 'config')
 from util import FeatureSources
 import os, shutil
 
-# Create the kernel environment
+# Create a new environment to build all the kernel components
 env = manager.CreateBare(name = 'kernel', flags = {
-    'CARGOFLAGS': []
+    'CARGOFLAGS': [],
+
+    'ASFLAGS': [
+        '-nostdinc',
+    ],
+    'LINKFLAGS': [
+        '-nostdlib',
+    ]
 })
+
+##############################
+# Build the boot information #
+##############################
+
+# select the files to build
+sources = FeatureSources(config, [
+    'bootinfo.S'
+])
+
+# Build
+env.Program('boot-info', map(env.Object, sources))
+
+####################
+# Build the kernel #
+####################
 
 # Copy the src file
 try:
@@ -16,7 +39,7 @@ except Exception as e:
 
 # Build Cargo crate
 kernel = env.RunCargo('kernel.o', 'Cargo.toml')
-AlwaysBuild(kernel)
+#AlwaysBuild(kernel)
 
 ## Link the kernel
 # Get the linker script location
@@ -26,10 +49,10 @@ env['LDSCRIPT'] = File('arch/' + config['ARCH'] + '/linker.ld')
 env.Command(
     'kernel-unstripped',
     kernel,
-    Action('$LD --gc-sections -T $LDSCRIPT -o $TARGET $SOURCE'))
+    Action('$LD --gc-sections -T $LDSCRIPT -o $TARGET $SOURCE %s' % (File('boot-info').path)))
 
 # The kernel-unstripped target depends on the linker script
-Depends('kernel-unstripped', env['LDSCRIPT'])
+Depends('kernel-unstripped', [env['LDSCRIPT'], 'boot-info' ])
 
 # Generate various information files and the stripped kernel image.
 env.Command(['kernel', 'kernel.lst', 'kernel.rde', 'kernel.sym'], 'kernel-unstripped', [

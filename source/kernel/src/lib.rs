@@ -2,7 +2,7 @@
 #![no_std]
 
 #[no_mangle]
-fn start() -> ! {
+pub extern "C" fn start() -> ! {
     loop { }
 }
 
