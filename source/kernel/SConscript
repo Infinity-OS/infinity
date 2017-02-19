@@ -16,6 +16,7 @@ except Exception as e:
 
 # Build Cargo crate
 kernel = env.RunCargo('kernel.o', 'Cargo.toml')
+AlwaysBuild(kernel)
 
 ## Link the kernel
 # Get the linker script location
