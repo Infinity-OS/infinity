@@ -37,14 +37,18 @@ try:
 except Exception as e:
     pass
 
-# Build Cargo crate
+# Build Cargo crate (this must be performade all the times)
 kernel = env.RunCargo('kernel.o', 'Cargo.toml')
 AlwaysBuild(kernel)
 
 kernel_tmp = File('kernel.tmp').abspath
 kernel_obj = File('kernel.o').abspath
 
-# HACK: Here we must move the pre-builded file, if exists, tmp one
+# HACK: Scons doesn't support Rust (or Cargo) so it can't know when the package
+# must be build and the Cargo don't build the binary if there is no changes on
+# the files. For that we copy the previous build kernel.o to kernel.tmp file, in
+# case of the file exists, and after the Cargo execution we move the kernel.tmp
+# back to kernel.o if the Cargo doesn't built a new object file.
 if os.path.exists(kernel_obj):
     shutil.move(kernel_obj, kernel_tmp)
 
@@ -52,7 +56,6 @@ def post_kernel(target, source, env):
     if not os.path.exists(kernel_obj):
         shutil.move(kernel_tmp, kernel_obj)
 
-# env.AddPreAction(kernel, Action(pre_kernel))
 env.AddPostAction(kernel, Action(post_kernel))
 
 ## Link the kernel
