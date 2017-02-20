@@ -43,6 +43,8 @@ AlwaysBuild(kernel)
 
 kernel_tmp = File('kernel.tmp').abspath
 kernel_obj = File('kernel.o').abspath
+deps_dir = Dir('target/x86_64-unknown-linux-gnu/debug/deps').abspath
+lib_file = File('libkernel.a').abspath
 
 # HACK: Scons doesn't support Rust (or Cargo) so it can't know when the package
 # must be build and the Cargo don't build the binary if there is no changes on
@@ -53,8 +55,15 @@ if os.path.exists(kernel_obj):
     shutil.move(kernel_obj, kernel_tmp)
 
 def post_kernel(target, source, env):
+    # move the kernel.tmp to kernel.o if the kernel.o doesn't exists
     if not os.path.exists(kernel_obj):
         shutil.move(kernel_tmp, kernel_obj)
+
+    # copy the libkernel to the kernel root dir
+    for filename in os.listdir(deps_dir):
+        if filename.startswith("libkernel"):
+            shutil.copy(os.path.join(deps_dir, filename), lib_file)
+            break
 
 env.AddPostAction(kernel, Action(post_kernel))
 
@@ -66,7 +75,7 @@ env['LDSCRIPT'] = File('arch/' + config['ARCH'] + '/linker.ld')
 env.Command(
     'kernel-unstripped',
     kernel,
-    Action('$LD --gc-sections -T $LDSCRIPT -o $TARGET $SOURCE %s' % (File('boot-info').path)))
+    Action('$LD --gc-sections -T $LDSCRIPT -o $TARGET $SOURCE %s %s' % (File('boot-info').path, lib_file)))
 
 # The kernel-unstripped target depends on the linker script
 Depends('kernel-unstripped', [env['LDSCRIPT'], 'boot-info' ])

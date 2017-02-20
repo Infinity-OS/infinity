@@ -1,8 +1,12 @@
 [package]
 name = "kernel"
 version = "0.1.0"
+authors = ["Gil Mendes <gil00mendes@gmail.com>", "Ivo Ribeiro <ivolopesribeiro15@gmail.com>"]
 
 [lib]
 name = "kernel"
 path = "src/lib.rs"
 crate-type = ["staticlib"]
+
+[dependencies]
+rlibc = "1.0.0"
