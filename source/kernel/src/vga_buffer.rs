@@ -3,15 +3,7 @@ use core::fmt;
 use spin::Mutex;
 use volatile::Volatile;
 
-const BUFFER_HEIGHT: usize = 25;
-const BUFFER_WIDTH: usize = 80;
-
-pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
-    column_position: 0,
-    color_code: ColorCode::new(Color::LightGreen, Color::Black),
-    buffer: unsafe { Unique::new(0x6000 as *mut _) },
-});
-
+//macros  definition
 macro_rules! println {
     ($fmt:expr) => (print!(concat!($fmt, "\n")));
     ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
@@ -23,16 +15,9 @@ macro_rules! print {
     });
 }
 
-pub fn print(args: fmt::Arguments) {
-    use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
-}
-
-pub fn clear_screen() {
-    for _ in 0..BUFFER_HEIGHT {
-        println!("");
-    }
-}
+//constants
+const BUFFER_HEIGHT: usize = 25;
+const BUFFER_WIDTH: usize = 80;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
@@ -56,11 +41,26 @@ pub enum Color {
     White = 15,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct ColorCode(u8);
+
+impl ColorCode {
+    const fn new(foreground: Color, background: Color) -> ColorCode {
+        ColorCode((background as u8) << 4 | (foreground as u8))
+    }
+}
+
 pub struct Writer {
     column_position: usize,
     color_code: ColorCode,
     buffer: Unique<Buffer>,
 }
+
+pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::Cyan, Color::White),
+    buffer: unsafe { Unique::new(0x6000 as *mut _) },
+});
 
 impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
@@ -111,24 +111,6 @@ impl Writer {
     }
 }
 
-impl fmt::Write for Writer {
-    fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
-        for byte in s.bytes() {
-            self.write_byte(byte)
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-struct ColorCode(u8);
-
-impl ColorCode {
-    const fn new(foreground: Color, background: Color) -> ColorCode {
-        ColorCode((background as u8) << 4 | (foreground as u8))
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct ScreenChar {
@@ -140,7 +122,27 @@ struct Buffer {
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
+pub fn print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
+}
 
-extern fn panic_fmt(_: ::core::fmt::Arguments, _: &'static str, _: u32) -> ! {
+pub fn clear_screen() {
+    for _ in 0..BUFFER_HEIGHT {
+        println!("");
+    }
+}
+
+impl fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
+        for byte in s.bytes() {
+            self.write_byte(byte)
+        }
+        Ok(())
+    }
+}
+
+extern "C" fn panic_fmt(_: ::core::fmt::Arguments, _: &'static str, _: u32) -> ! {
     loop {}
 }
+

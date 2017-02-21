@@ -17,12 +17,11 @@ mod vga_buffer;
 /// This is the entry point for the Kernel, all the things must be initialized
 #[no_mangle]
 pub extern "C" fn start() -> ! {
-
     vga_buffer::clear_screen();
     println!("Hello from Infinity OS{}", "!");
 
 
-    extern {
+    extern "C" {
         /// The starting byte of the .bss segment
         static mut __bss_start: u8;
         /// The ending byte of the .bss segment
@@ -38,11 +37,10 @@ pub extern "C" fn start() -> ! {
             let size = end_ptr - start_ptr as usize;
             memset(start_ptr, 0, size);
         }
-
     }
 
     // Makes a infinity loop to avoid the kernel returns
-    loop { }
+    loop {}
 }
 
 #[allow(non_snake_case)]
@@ -51,5 +49,11 @@ pub extern "C" fn _Unwind_Resume() -> ! {
     loop {}
 }
 
-#[lang = "eh_personality"] extern fn eh_personality() {}
-#[lang = "panic_fmt"] #[no_mangle] pub extern fn panic_fmt() -> ! {loop{}}
+#[lang = "eh_personality"]
+extern "C" fn eh_personality() {}
+
+#[lang = "panic_fmt"]
+#[no_mangle]
+pub extern "C" fn panic_fmt() -> ! {
+    loop {}
+}
