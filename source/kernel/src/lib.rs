@@ -39,6 +39,12 @@ pub extern "C" fn start() -> ! {
         }
     }
 
+    // clear the screen
+    vga_buffer::clear_screen();
+
+    // Print a Welcome message
+    println!("Infinity OS!");
+
     // Makes a infinity loop to avoid the kernel returns
     loop {}
 }
