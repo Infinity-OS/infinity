@@ -19,7 +19,8 @@ mod vga_buffer;
 pub extern "C" fn start() -> ! {
 
     vga_buffer::clear_screen();
-    //println!("Hello World{}", "!");
+    println!("Hello from Infinity OS{}", "!");
+
 
     extern {
         /// The starting byte of the .bss segment
