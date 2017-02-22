@@ -24,3 +24,6 @@
 .DS_Store
 .idea
 CMakeLists.txt
+
+# Kernel
+source/kernel/src/version.rs

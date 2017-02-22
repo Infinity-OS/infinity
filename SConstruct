@@ -108,7 +108,7 @@ config = ConfigParser('.config')
 manager.AddVariable('_CONFIG', config)
 
 # Make config, and the manager available outside this script
-Export('config', 'manager')
+Export('config', 'manager', 'version')
 
 # Add compiler-specific flags.
 output = Popen(["clang", "--version"], stdout=PIPE).communicate()[0]

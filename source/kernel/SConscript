@@ -1,4 +1,4 @@
-Import('manager', 'config')
+Import('manager', 'config', 'version')
 
 from util import FeatureSources
 import os, shutil
@@ -26,6 +26,21 @@ sources = FeatureSources(config, [
 
 # Build
 env.Program('boot-info', map(env.Object, sources))
+
+#########################################
+# Generate the version information file #
+#########################################
+
+f = open(str(File('src/version.rs').abspath), 'w')
+f.write('#[allow(dead_code)]\n')
+f.write('pub static PULSAR_VER_RELEASE: u8 = %d;\n' % (version['PULSAR_VER_RELEASE']));
+f.write('#[allow(dead_code)]\n')
+f.write('pub static PULSAR_VER_UPDATE: u8 = %d;\n' % (version['PULSAR_VER_UPDATE']));
+f.write('#[allow(dead_code)]\n')
+f.write('pub static PULSAR_VER_REVISION: u8 = %d;\n' % (version['PULSAR_VER_REVISION']));
+f.write('#[allow(dead_code)]\n')
+f.write('pub static PULSAR_VER_STRING: &str = "%s";\n' % (version['PULSAR_VER_STRING']));
+f.close()
 
 ####################
 # Build the kernel #
@@ -65,7 +80,7 @@ def post_kernel(target, source, env):
             shutil.copy(os.path.join(deps_dir, filename), lib_file)
             break
 
-env.AddPostAction(kernel, Action(post_kernel))
+env.AddPostAction(kernel, Action(post_kernel, None))
 
 ## Link the kernel
 # Get the linker script location

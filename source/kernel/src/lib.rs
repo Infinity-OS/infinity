@@ -13,6 +13,7 @@ use rlibc::memset;
 
 #[macro_use]
 mod vga_buffer;
+mod version;
 
 /// Magic number passed to the entry point of a Initium kernel.
 static INITIUM_MAGIC: u32 = 0xb007cafe;
@@ -42,7 +43,7 @@ pub extern "C" fn start(magic: u32) -> ! {
     vga_buffer::clear_screen();
 
     // Print a Welcome message
-    println!("Infinity OS!\n");
+    println!("Infinity OS {}", version::PULSAR_VER_STRING);
 
     // print out the Initium Magic number
     println!("Bootloder magic flag: 0x{0:x}", magic);
