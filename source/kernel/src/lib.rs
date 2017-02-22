@@ -14,13 +14,12 @@ use rlibc::memset;
 #[macro_use]
 mod vga_buffer;
 
+/// Magic number passed to the entry point of a Initium kernel.
+static INITIUM_MAGIC: u32 = 0xb007cafe;
+
 /// This is the entry point for the Kernel, all the things must be initialized
 #[no_mangle]
-pub extern "C" fn start() -> ! {
-    vga_buffer::clear_screen();
-    println!("Hello from Infinity OS{}", "!");
-
-
+pub extern "C" fn start(magic: u32) -> ! {
     extern "C" {
         /// The starting byte of the .bss segment
         static mut __bss_start: u8;
@@ -43,7 +42,15 @@ pub extern "C" fn start() -> ! {
     vga_buffer::clear_screen();
 
     // Print a Welcome message
-    println!("Infinity OS!");
+    println!("Infinity OS!\n");
+
+    // print out the Initium Magic number
+    println!("Bootloder magic flag: 0x{0:x}", magic);
+
+    // check if we are been booted up from a valid bootloader
+    if magic != INITIUM_MAGIC {
+        panic!("Invalid magic flag!");
+    }
 
     // Makes a infinity loop to avoid the kernel returns
     loop {}
