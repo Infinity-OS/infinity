@@ -3,7 +3,11 @@ OUTPUT_ARCH("i386:x86-64")
 OUTPUT_FORMAT("elf64-x86-64")
 
 SECTIONS {
-    . = 0xffffffff80000000 + SIZEOF_HEADERS;
+
+    /* This define the Kernel's virtual base */
+    . = 0xffffffff80000000;
+    . += SIZEOF_HEADERS;
+    . = ALIGN(0x1000);
 
     .text : {
         __text_start = .;
@@ -44,8 +48,14 @@ SECTIONS {
 
     __end = .;
 
+    /* Discard some unnecessary sections */
     /DISCARD/ : {
         *(.note.GNU-stack)
+        *(.note.gnu.*)
         *(.comment*)
+        *(.debug*)
+        *(.eh_frame*)
+        *(.gcc_except_table*)
+        *(.rel.eh_frame*)
     }
 }
