@@ -3,6 +3,7 @@
 mod tag;
 mod memory_map;
 mod elf_sections;
+mod core_information;
 
 pub mod initium;
 

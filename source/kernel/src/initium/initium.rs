@@ -3,6 +3,7 @@ use core::mem;
 use super::memory_map::{MemoryMapTag,MemoryMapIter};
 use super::tag::{TagType, Tag, TagIter};
 use super::elf_sections::SectionTag;
+use super::core_information::CoreTag;
 
 /// Load the Initium tags
 pub unsafe fn load(initium_addr: usize) -> &'static InitiumBootInfo {
@@ -20,6 +21,11 @@ pub struct InitiumBootInfo {
 impl InitiumBootInfo {
     unsafe fn from_raw_parts(initium_addr: usize) -> &'static InitiumBootInfo {
         &*(initium_addr as *const InitiumBootInfo)
+    }
+
+    /// Get the core information
+    pub fn core_information(&self) -> Option<&CoreTag> {
+        self.cast_find_tag::<CoreTag>(TagType::CoreInformation)
     }
 
     pub fn memory_map(&self) -> MemoryMapIter {
