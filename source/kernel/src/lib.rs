@@ -56,12 +56,21 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
 
     // load boot information
     let boot_info = unsafe { initium::load(initium_info_addr) };
-    let memory_map_tag = boot_info.memory_map();
 
-    println!("memory areas:");
+    // get the free memory areas and print it out
+    let memory_map_tag = boot_info.memory_map();
+    println!("Memory Areas:");
     for entry in memory_map_tag {
         println!("    start: 0x{:x}, length: 0x{:x}",
         entry.base_address(), entry.length());
+    }
+
+    // Print the kernel sections
+    let elf_sections = boot_info.elf_sections().expect("Elf-sections tag required");
+    println!("Kernel Sections:");
+    for section in elf_sections.elf_sections() {
+        println!("    addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}",
+                 section.section_start_address(), section.size_bytes(), section.flags());
     }
 
     // Makes a infinity loop to avoid the kernel returns

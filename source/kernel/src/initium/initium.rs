@@ -2,6 +2,7 @@ use core::mem;
 
 use super::memory_map::{MemoryMapTag,MemoryMapIter};
 use super::tag::{TagType, Tag, TagIter};
+use super::elf_sections::SectionTag;
 
 /// Load the Initium tags
 pub unsafe fn load(initium_addr: usize) -> &'static InitiumBootInfo {
@@ -24,6 +25,10 @@ impl InitiumBootInfo {
     pub fn memory_map(&self) -> MemoryMapIter {
         let first_mem_tag = self.cast_find_tag::<MemoryMapTag>(TagType::PhysicalMemory);
         MemoryMapIter::new(first_mem_tag.unwrap())
+    }
+
+    pub fn elf_sections(&self) -> Option<&SectionTag> {
+        self.cast_find_tag::<SectionTag>(TagType::ElfSections)
     }
 
     pub fn tags(&self) -> TagIter {

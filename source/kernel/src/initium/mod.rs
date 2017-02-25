@@ -2,6 +2,7 @@
 
 mod tag;
 mod memory_map;
+mod elf_sections;
 
 pub mod initium;
 
