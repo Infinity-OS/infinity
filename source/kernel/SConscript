@@ -31,6 +31,9 @@ env.Program('boot-info', map(env.Object, sources))
 # Generate the version information file #
 #########################################
 
+# version file to be created
+version_file = File('src/version.rs')
+
 def gen_version(target, source, env):
     f = open(str(target[0]), 'w')
     f.write('#[allow(dead_code)]\n')
@@ -42,7 +45,7 @@ def gen_version(target, source, env):
     f.write('#[allow(dead_code)]\n')
     f.write('pub static PULSAR_VER_STRING: &str = "%s";\n' % (version['PULSAR_VER_STRING']));
     f.close()
-AlwaysBuild(env.Command(File('src/version.rs').abspath, [], env.Action(gen_version, None)))
+AlwaysBuild(env.Command(version_file.abspath, [], env.Action(gen_version, None)))
 
 ####################
 # Build the kernel #
@@ -57,6 +60,9 @@ except Exception as e:
 # Build Cargo crate (this must be performade all the times)
 kernel = env.RunCargo('kernel.o', 'Cargo.toml')
 AlwaysBuild(kernel)
+
+# Files on what kernel depends
+Depends(kernel, [version_file])
 
 kernel_tmp = File('kernel.tmp').abspath
 kernel_obj = File('kernel.o').abspath
