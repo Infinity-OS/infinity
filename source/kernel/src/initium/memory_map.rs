@@ -59,6 +59,7 @@ impl MemoryMapTag {
     }
 }
 
+#[derive(Clone)]
 pub struct MemoryMapIter {
     current_entry: *const MemoryMapTag
 }

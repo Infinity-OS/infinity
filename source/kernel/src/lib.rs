@@ -8,13 +8,18 @@
 extern crate rlibc;
 extern crate volatile;
 extern crate spin;
+extern crate bitflags;
+
 
 use rlibc::memset;
+use memory::FrameAllocator;
 
 mod initium;
 #[macro_use]
 mod vga_buffer;
 mod version;
+mod memory;
+
 
 /// Magic number passed to the entry point of a Initium kernel.
 static INITIUM_MAGIC: u32 = 0xb007cafe;
@@ -73,6 +78,31 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
                  section.section_start_address(), section.size_bytes(), section.flags());
     }
 
+    let core_information = boot_info.core_information().expect("Core tag required");
+    let initium_start = initium_info_addr;
+    let initium_end = initium_info_addr + (core_information.tags_size() as usize);
+
+    let sections = boot_info.elf_sections().expect("Elf-sections tag required");
+    let kernel_start = sections .elf_sections().map(|s| s.section_start_address())
+        .min().unwrap();
+    let kernel_end = sections.elf_sections().map(|s| s.section_start_address() + s.size_bytes())
+        .max().unwrap();
+
+    println!("Initium space: 0x{:x}-0x{:x}", initium_start, initium_end);
+
+    let mut frame_allocator = memory::AreaFrameAllocator::new(kernel_start as usize,
+                                                              kernel_end as usize,
+                                                              initium_start,
+                                                              initium_end,
+                                                              boot_info.memory_map());
+
+    for i in 0.. {
+        if let None = frame_allocator.allocate_frame() {
+            println!("allocated {} frames", i);
+            break;
+        }
+    }
+
     // Makes a infinity loop to avoid the kernel returns
     loop {}
 }
@@ -93,5 +123,13 @@ pub extern fn panic_fmt(fmt: core::fmt::Arguments, file: &'static str,
 {
     println!("\n\nPANIC in {} at line {}:", file, line);
     println!("    {}", fmt);
+
+
+
     loop{}
 }
+
+
+
+
+
