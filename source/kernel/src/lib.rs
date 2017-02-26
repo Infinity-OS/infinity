@@ -9,7 +9,10 @@ extern crate rlibc;
 extern crate volatile;
 extern crate spin;
 extern crate bitflags;
-
+extern crate bit_field;
+extern crate x86;
+#[macro_use]
+extern crate lazy_static;
 
 use rlibc::memset;
 use memory::FrameAllocator;
@@ -19,7 +22,7 @@ mod initium;
 mod vga_buffer;
 mod version;
 mod memory;
-
+mod interrupts;
 
 /// Magic number passed to the entry point of a Initium kernel.
 static INITIUM_MAGIC: u32 = 0xb007cafe;
@@ -102,6 +105,20 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
             break;
         }
     }
+
+    // Initialize IDT system
+    interrupts::init();
+
+    fn divide_by_zero() {
+        unsafe {
+            asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel")
+        }
+    }
+
+    // provoke a divide-by-zero fault
+    //divide_by_zero();
+
+    println!("It did not crash!");
 
     // Makes a infinity loop to avoid the kernel returns
     loop {}
