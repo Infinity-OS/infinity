@@ -2,13 +2,13 @@ use memory::{Frame, FrameAllocator};
 use initium::memory_map::{MemoryMapIter, MemoryMapTag};
 
 pub struct AreaFrameAllocator {
-    //increased every time we return a frame.
+    // increased every time we return a frame.
     next_free_frame: Frame,
-    //memory area that contains next_free_frame
+    // memory area that contains next_free_frame
     current_area: Option<&'static MemoryMapTag>,
-    //ext_free_frame leaves this area, we will look for the next one in areas
+    // ext_free_frame leaves this area, we will look for the next one in areas
     areas: MemoryMapIter,
-    //used to avoid using already allocated zones
+    // used to avoid using already allocated zones
     kernel_start: Frame,
     kernel_end: Frame,
     initium_start: Frame,
@@ -39,14 +39,14 @@ impl AreaFrameAllocator {
         self.current_area = self.areas
             .clone()
             .filter(|area| {
-                let address = area. base_address() + area.length() - 1;
+                let address = area.base_address() + area.length() - 1;
                 Frame::containing_address(address as usize) >=
                     self.next_free_frame
             })
-            .min_by_key(|area| area. base_address());
+            .min_by_key(|area| area.base_address());
 
         if let Some(area) = self.current_area {
-            let start_frame = Frame::containing_address(area. base_address() as usize);
+            let start_frame = Frame::containing_address(area.base_address() as usize);
             if self.next_free_frame < start_frame {
                 self.next_free_frame = start_frame;
             }
@@ -63,7 +63,7 @@ impl FrameAllocator for AreaFrameAllocator {
 
             // the last frame of the current area
             let current_area_last_frame = {
-                let address = area. base_address() + area.length() - 1;
+                let address = area.base_address() + area.length() - 1;
                 Frame::containing_address(address as usize)
             };
 
@@ -74,7 +74,7 @@ impl FrameAllocator for AreaFrameAllocator {
                 // `frame` is used by the kernel
                 self.next_free_frame = Frame { number: self.kernel_end.number + 1 };
             } else if frame >= self.initium_start && frame <= self.initium_end {
-                // `frame` is used by the multiboot information structure
+                // `frame` is used by the Initium information structure
                 self.next_free_frame = Frame { number: self.initium_end.number + 1 };
             } else {
                 // frame is unused, increment `next_free_frame` and return it

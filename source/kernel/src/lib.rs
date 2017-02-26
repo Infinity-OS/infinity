@@ -74,9 +74,9 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
     }
 
     // Print the kernel sections
-    let elf_sections = boot_info.elf_sections().expect("Elf-sections tag required");
+    let sections_tag = boot_info.elf_sections().expect("Elf-sections tag required");
     println!("Kernel Sections:");
-    for section in elf_sections.elf_sections() {
+    for section in sections_tag.elf_sections() {
         println!("    addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}",
                  section.section_start_address(), section.size_bytes(), section.flags());
     }
@@ -85,13 +85,14 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
     let initium_start = initium_info_addr;
     let initium_end = initium_info_addr + (core_information.tags_size() as usize);
 
-    let sections = boot_info.elf_sections().expect("Elf-sections tag required");
-    let kernel_start = sections .elf_sections().map(|s| s.section_start_address())
+    let kernel_start = sections_tag.elf_sections().map(|s| s.section_start_address())
         .min().unwrap();
-    let kernel_end = sections.elf_sections().map(|s| s.section_start_address() + s.size_bytes())
+    let kernel_end = sections_tag.elf_sections().map(|s| s.section_start_address() + s.size_bytes())
         .max().unwrap();
 
-    println!("Initium space: 0x{:x}-0x{:x}", initium_start, initium_end);
+    // This is just for debug proposes, on the future this must be removed
+    println!("Kernel range: 0x{:x} - 0x{:x}", kernel_start, kernel_end);
+    println!("Initium range: 0x{:x} - 0x{:x}", initium_start, initium_end);
 
     let mut frame_allocator = memory::AreaFrameAllocator::new(kernel_start as usize,
                                                               kernel_end as usize,

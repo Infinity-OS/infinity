@@ -98,7 +98,7 @@ env['LDSCRIPT'] = File('arch/' + config['ARCH'] + '/linker.ld')
 env.Command(
     'kernel-unstripped',
     kernel,
-    Action('$LD --gc-sections -z max-page-size=0x1000 -T $LDSCRIPT -o $TARGET $SOURCE %s %s' % (File('boot-info').path, lib_file)))
+    Action('$LD -n --gc-sections -z max-page-size=0x1000 -T $LDSCRIPT -o $TARGET $SOURCE %s %s' % (File('boot-info').path, lib_file)))
 
 # The kernel-unstripped target depends on the linker script
 Depends('kernel-unstripped', [env['LDSCRIPT'], 'boot-info' ])

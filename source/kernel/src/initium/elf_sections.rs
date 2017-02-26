@@ -28,10 +28,14 @@ pub struct SectionTag {
 impl SectionTag {
     /// Get all the ELF sections
     pub fn elf_sections(&'static self) -> ElfSectionIter {
+        // HACK: calculate the next section address, to avoid the 0x00 empty sections
+        let next_sections_addr = (&self.first_section as *const ElfSectionHeader as u64) + self.entry_size as u64;
+        let next_section = unsafe { &*(next_sections_addr as *const ElfSectionHeader) };
+
         ElfSectionIter {
-            current_section: &self.first_section,
+            current_section: &next_section,
             section_index: 0,
-            total_sections: self.num as u32,
+            total_sections: self.num -1 as u32,
             entry_size: self.entry_size as u64
         }
     }

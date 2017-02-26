@@ -76,7 +76,7 @@ if config['PLATFORM'] == 'bios':
 
 	# Target to run in QEMU
 	Alias('qemu', dist.Command('__qemu', ['cdrom.iso'], Action(
-		config['QEMU_BINARY'] + ' -d int -no-reboot -cdrom $SOURCE -boot d ' + config['QEMU_OPTS'],
+		config['QEMU_BINARY'] + ' -d int -no-reboot -cdrom $SOURCE -boot d -m 512 -monitor vc:1024x768 ' + config['QEMU_OPTS'],
 		None)))
 else:
 	Default(dist['LOADER'])

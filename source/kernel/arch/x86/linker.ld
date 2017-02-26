@@ -5,7 +5,7 @@ OUTPUT_FORMAT("elf64-x86-64")
 SECTIONS {
 
     /* This define the Kernel's virtual base */
-    . = 0xffffffff80000000;
+    . = 1M;
     . += SIZEOF_HEADERS;
     . = ALIGN(0x1000);
 
