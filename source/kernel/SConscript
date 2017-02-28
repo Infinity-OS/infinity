@@ -8,10 +8,13 @@ env = manager.CreateBare(name = 'kernel', flags = {
     'CARGOFLAGS': [],
 
     'ASFLAGS': [
-        '-nostdinc',
+        '-nostdinc', '-m64',
+    ],
+    'NASM_FLAGS': [
+        '-felf64'
     ],
     'LINKFLAGS': [
-        '-nostdlib',
+        '-nostdlib', '-m64',
     ]
 })
 

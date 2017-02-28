@@ -63,7 +63,7 @@ pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
     row_positon: 0,
     column_position: 0,
     color_code: ColorCode::new(Color::Cyan, Color::White),
-    buffer: unsafe { Unique::new(0x6000 as *mut _) },
+    buffer: unsafe { Unique::new(0xffffff8000005000 as *mut _) },
 });
 
 /// Implement the Writer Struct
