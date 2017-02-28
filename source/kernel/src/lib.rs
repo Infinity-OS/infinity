@@ -8,6 +8,7 @@
 extern crate rlibc;
 extern crate volatile;
 extern crate spin;
+#[macro_use]
 extern crate bitflags;
 extern crate bit_field;
 extern crate x86;
@@ -107,8 +108,11 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
         }
     }
 
-    // Initialize IDT system
-    interrupts::init();
+    // WIP: testing page
+    // memory::test_paging(&mut frame_allocator);
+
+    // WIP: Initialize IDT system
+    // interrupts::init();
 
     fn divide_by_zero() {
         unsafe {
@@ -117,7 +121,7 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
     }
 
     // provoke a divide-by-zero fault
-    //divide_by_zero();
+    // divide_by_zero();
 
     println!("It did not crash!");
 
