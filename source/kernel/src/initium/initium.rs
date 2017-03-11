@@ -4,6 +4,7 @@ use super::memory_map::{MemoryMapTag,MemoryMapIter};
 use super::tag::{TagType, Tag, TagIter};
 use super::elf_sections::SectionTag;
 use super::core_information::CoreTag;
+use super::pagetables_tag::PageTablesTag;
 
 /// Load the Initium tags
 pub unsafe fn load(initium_addr: usize) -> &'static InitiumBootInfo {
@@ -26,6 +27,11 @@ impl InitiumBootInfo {
     /// Get the core information
     pub fn core_information(&self) -> Option<&CoreTag> {
         self.cast_find_tag::<CoreTag>(TagType::CoreInformation)
+    }
+
+    /// Get paging map information (this is architecture specific)
+    pub fn page_tables(&self) -> Option<&PageTablesTag> {
+        self.cast_find_tag::<PageTablesTag>(TagType::PageTables)
     }
 
     pub fn memory_map(&self) -> MemoryMapIter {
