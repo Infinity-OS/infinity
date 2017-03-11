@@ -29,7 +29,14 @@ SECTIONS {
         __rodata_end = .;
     }
 
-    .data ALIGN(0x1000) : {
+    /* Align the start of each segment to a large page boundary to allows
+     * the kernel to be mapped with large pages.
+     */
+
+    . = ALIGN(0x200000);
+    __data_seg_start = .;
+
+    .data : {
         __data_start = .;
         *(.data)
         *(.data.*)
@@ -37,7 +44,9 @@ SECTIONS {
         __data_end = .;
     }
 
-    .bss ALIGN(0x1000) : {
+    . = ALIGN(ALIGN(0x1000));
+
+    .bss : {
         __bss_start = .;
         *(.bss)
         *(.bss.*)
@@ -45,6 +54,8 @@ SECTIONS {
         . = ALIGN(0x1000);
         __bss_end = .;
     }
+
+    __data_seg_end = .;
 
     __end = .;
 

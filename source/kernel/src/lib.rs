@@ -101,14 +101,8 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
                                                               initium_end,
                                                               boot_info.memory_map());
 
-    for i in 0.. {
-        if let None = frame_allocator.allocate_frame() {
-            println!("allocated {} frames", i);
-            break;
-        }
-    }
-
     // WIP: testing page
+    // TODO: use the bootloader page tables tag to get the PML4 address
     // memory::test_paging(&mut frame_allocator);
 
     // WIP: Initialize IDT system

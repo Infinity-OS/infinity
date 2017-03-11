@@ -182,7 +182,6 @@ if os.environ.has_key('CXX') and os.path.basename(os.environ['CXX']) == 'c++-ana
 	target_env['ENV']['CCC_CXX'] = toolchain.tool_path('clang++')
 else:
 	target_env['CXX'] = toolchain.tool_path('clang++')
-target_env['AS']      = toolchain.tool_path('as')
 target_env['OBJDUMP'] = toolchain.tool_path('objdump')
 target_env['READELF'] = toolchain.tool_path('readelf')
 target_env['NM']      = toolchain.tool_path('nm')
@@ -194,6 +193,10 @@ target_env['LD']      = toolchain.tool_path('ld')
 
 # TODO: we must recompile de rust to add support to Pulsar targets
 target_env['CARGO']   = 'cargo'
+
+# Use nasm as our assembler in the kernel
+target_env['AS']      = 'nasm'
+target_env['ASCOM']   = '$AS $NASM_FLAGS $SOURCES -o $TARGET'
 
 # Build the target system
 SConscript('source/SConscript', variant_dir = os.path.join('build',
