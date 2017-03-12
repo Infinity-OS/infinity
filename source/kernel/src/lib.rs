@@ -28,6 +28,13 @@ mod interrupts;
 /// Magic number passed to the entry point of a Initium kernel.
 static INITIUM_MAGIC: u32 = 0xb007cafe;
 
+/// Kernel allocation area base
+const KERNEL_KMEM_BASE: u32 = 0xFFFFFF8000000000;
+/// Kernel allocation area size (510GB)
+const KERNEL_KMEM_SIZE: u32 = 0x0000007F80000000;
+/// Last address of kmem space
+const KERNEL_KMEM_END: u32 = (KERNEL_KMEM_BASE + KERNEL_KMEM_SIZE - 1);
+
 /// This is the entry point for the Kernel, all the things must be initialized
 #[no_mangle]
 pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
@@ -53,10 +60,7 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
     vga_buffer::clear_screen();
 
     // Print a Welcome message
-    println!("Infinity OS {}", version::PULSAR_VER_STRING);
-
-    // print out the Initium Magic number
-    println!("Bootloder magic flag: 0x{0:x}", magic);
+    println!("kernel: version {} booting...", version::PULSAR_VER_STRING);
 
     // check if we are been booted up from a valid bootloader
     if magic != INITIUM_MAGIC {
@@ -66,47 +70,26 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
     // load boot information
     let boot_info = unsafe { initium::load(initium_info_addr) };
 
-    // get the free memory areas and print it out
-    let memory_map_tag = boot_info.memory_map();
-    println!("Memory Areas:");
-    for entry in memory_map_tag {
-        println!("    start: 0x{:x}, length: 0x{:x}",
-        entry.base_address(), entry.length());
-    }
-
-    // Print the kernel sections
-    let sections_tag = boot_info.elf_sections().expect("Elf-sections tag required");
-    println!("Kernel Sections:");
-    for section in sections_tag.elf_sections() {
-        println!("    addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}",
-                 section.section_start_address(), section.size_bytes(), section.flags());
-    }
-
     let core_information = boot_info.core_information().expect("Core tag required");
     let initium_start = initium_info_addr;
     let initium_end = initium_info_addr + (core_information.tags_size() as usize);
 
-    let kernel_start = sections_tag.elf_sections().map(|s| s.section_start_address())
-        .min().unwrap();
-    let kernel_end = sections_tag.elf_sections().map(|s| s.section_start_address() + s.size_bytes())
-        .max().unwrap();
-
-    // This is just for debug proposes, on the future this must be removed
-    println!("Kernel range: 0x{:x} - 0x{:x}", kernel_start, kernel_end);
-    println!("Initium range: 0x{:x} - 0x{:x}", initium_start, initium_end);
-
-    let mut frame_allocator = memory::AreaFrameAllocator::new(kernel_start as usize,
-                                                              kernel_end as usize,
+    let mut frame_allocator = memory::AreaFrameAllocator::new(KERNEL_KMEM_BASE as usize,
+                                                              KERNEL_KMEM_END as usize,
                                                               initium_start,
                                                               initium_end,
                                                               boot_info.memory_map());
+
+    loop {}
+
+    // --- OLD
 
     // WIP: testing page
     // TODO: use the bootloader page tables tag to get the PML4 address
     // memory::test_paging(&mut frame_allocator);
 
     // WIP: Initialize IDT system
-    // interrupts::init();
+    interrupts::init();
 
     fn divide_by_zero() {
         unsafe {
@@ -115,12 +98,9 @@ pub extern "C" fn start(magic: u32, initium_info_addr: usize) -> ! {
     }
 
     // provoke a divide-by-zero fault
-    // divide_by_zero();
+    divide_by_zero();
 
     println!("It did not crash!");
-
-    // Makes a infinity loop to avoid the kernel returns
-    loop {}
 }
 
 #[allow(non_snake_case)]
