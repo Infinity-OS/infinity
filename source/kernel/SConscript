@@ -54,9 +54,13 @@ AlwaysBuild(env.Command(version_file.abspath, [], env.Action(gen_version, None))
 # Build the kernel #
 ####################
 
-# Copy the src file
+# Create the necessary symbolic links
 try:
     os.symlink(Dir('src').srcnode().abspath, Dir('src').abspath)
+except Exception as e:
+    pass
+try:
+    os.symlink(Dir('arch/' + config['ARCH']).srcnode().abspath, Dir('arch_' + config['ARCH']).abspath)
 except Exception as e:
     pass
 

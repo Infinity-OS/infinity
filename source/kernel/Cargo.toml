@@ -23,6 +23,9 @@ version = "0.2.2"
 default-features = false
 version = "0.8.1"
 
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+arch_x86_64 = { path = "arch_x86" }
+
 # The development profile, used for `cargo build`.
 [profile.dev]
 panic = "abort"
