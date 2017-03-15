@@ -1,5 +1,5 @@
 [root]
-name = "blog_os"
+name = "infinity_os"
 version = "0.1.0"
 dependencies = [
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
