@@ -1,12 +1,3 @@
-// Copyright 2015 Philipp Oppermann. See the README.md
-// file at the top-level directory of this distribution.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 #![feature(lang_items)]
 #![feature(const_fn, unique)]
 #![no_std]
@@ -23,11 +14,34 @@ extern crate x86;
 mod vga_buffer;
 mod memory;
 
+/// Enable the NXE bit to allow NO_EXECUTE pages.
+fn enable_nxe_bit() {
+    use x86::shared::msr::{IA32_EFER, rdmsr, wrmsr};
+
+    let nxe_bit = 1 << 11;
+    unsafe {
+        let efer = rdmsr(IA32_EFER);
+        wrmsr(IA32_EFER, efer | nxe_bit);
+    }
+}
+
+/// This enables the write protect bit in order to enable write protection on kernel mode.
+fn enable_write_protect_bit() {
+    use x86::shared::control_regs::{cr0, cr0_write, CR0_WRITE_PROTECT};
+
+    unsafe { cr0_write(cr0() | CR0_WRITE_PROTECT) };
+}
+
 #[no_mangle]
+/// Entry point for the Rust code
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // ATTENTION: we have a very small stack and no guard page
+
+    // clear the console screen
     vga_buffer::clear_screen();
-    println!("Hello World{}", "!");
+
+    // print out a welcome message
+    println!("kernel: botting");
 
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
     let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
@@ -67,7 +81,11 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
                                                               multiboot_end,
                                                               memory_map_tag.memory_areas());
 
-    memory::test_paging(&mut frame_allocator);
+    // TEST: remap the kernel
+    enable_nxe_bit();
+    enable_write_protect_bit();
+    memory::remap_the_kernel(&mut frame_allocator, boot_info);
+    println!("It did not crash!");
 
     loop {}
 }
