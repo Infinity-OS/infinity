@@ -1,19 +1,15 @@
-// Copyright 2015 Philipp Oppermann. See the README.md
-// file at the top-level directory of this distribution.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
+//! # Paging
+//! Some code was borrowed from [Phil Opp's Blog](http://os.phil-opp.com/modifying-page-tables.html)
 
 pub use self::entry::*;
+use core::ptr::Unique;
 use memory::{PAGE_SIZE, Frame, FrameAllocator};
 use self::table::{Table, Level4};
-use core::ptr::Unique;
+use self::temporary_page::TemporaryPage;
 
 mod entry;
 mod table;
+mod temporary_page;
 
 const ENTRY_COUNT: usize = 512;
 
@@ -162,6 +158,30 @@ impl ActivePageTable {
         unsafe { ::x86::shared::tlb::flush(page.start_address()) };
         // TODO free p(1,2,3) table if empty
         // allocator.deallocate_frame(frame);
+    }
+}
+pub struct InactivePageTable {
+    p4_frame: Frame,
+}
+
+impl InactivePageTable {
+    pub fn new(frame: Frame,
+                active_table: &mut ActivePageTable,
+                temporary_page: &mut TemporaryPage)
+                -> InactivePageTable
+    {
+        {
+            let table = temporary_page.map_table_frame(frame.clone(), active_table);
+
+            // zero the page table
+            table.zero();
+
+            // set up recursive mapping for the table
+            table[511].set(frame.clone(), PRESENT | WRITABLE);
+        }
+        temporary_page.unmap(active_table);
+
+        InactivePageTable { p4_frame: frame }
     }
 }
 
