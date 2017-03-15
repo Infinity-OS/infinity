@@ -20,6 +20,7 @@ const ENTRY_COUNT: usize = 512;
 pub type PhysicalAddress = usize;
 pub type VirtualAddress = usize;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Page {
     number: usize,
 }
@@ -67,6 +68,8 @@ impl ActivePageTable {
         unsafe { self.p4.get_mut() }
     }
 
+    /// Translates a virtual to the corresponding physical address.
+    /// Returns `None` if the address is not mapped.
     pub fn translate(&self, virtual_address: VirtualAddress) -> Option<PhysicalAddress> {
         let offset = virtual_address % PAGE_SIZE;
         self.translate_page(Page::containing_address(virtual_address))
@@ -111,6 +114,9 @@ impl ActivePageTable {
           .or_else(huge_page)
     }
 
+    /// Maps the page to the frame with the provided flags.
+    /// The `PRESENT` flag is added by default. Needs a `FrameAllocator` as it might need to create
+    /// new page tables.
     pub fn map_to<A>(&mut self, page: Page, frame: Frame, flags: EntryFlags, allocator: &mut A)
         where A: FrameAllocator
     {
@@ -122,6 +128,8 @@ impl ActivePageTable {
         p1[page.p1_index()].set(frame, flags | PRESENT);
     }
 
+    /// Maps the page to some free frame with the provided flags.
+    /// The free frame is allocated from the given `FrameAllocator`.
     pub fn map<A>(&mut self, page: Page, flags: EntryFlags, allocator: &mut A)
         where A: FrameAllocator
     {
@@ -129,6 +137,8 @@ impl ActivePageTable {
         self.map_to(page, frame, flags, allocator)
     }
 
+    /// Identity map the given frame with the provided flags.
+    /// The `FrameAllocator` is used to create new page tables if needed.
     pub fn identity_map<A>(&mut self, frame: Frame, flags: EntryFlags, allocator: &mut A)
         where A: FrameAllocator
     {
@@ -136,6 +146,7 @@ impl ActivePageTable {
         self.map_to(page, frame, flags, allocator)
     }
 
+    /// Unmaps the given page and adds all freed frames to the given `FrameAllocator`.
     fn unmap<A>(&mut self, page: Page, allocator: &mut A)
         where A: FrameAllocator
     {
