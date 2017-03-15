@@ -1,25 +1,19 @@
-# Copyright 2015 Philipp Oppermann. See the README.md
-# file at the top-level directory of this distribution.
 #
-# Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-# http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-# <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-# option. This file may not be copied, modified, or distributed
-# except according to those terms.
-
+# This script is used to build Infinity OS and the dependent components
+#
 # Please make our changes on the config.mak file and not here
+#
 
-NO_AS_NEEDED = -Wl,--no-as-needed
 LDFLAGS = $(NO_AS_NEEDED)
 LD = $(prefix)ld
+
+# Include the configuration file
+-include config.mak
 
 arch ?= x86_64
 target ?= $(arch)-unknown-linux-gnu
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
-
-# Include the configuration file
--include config.mak
 
 rust_os := target/$(target)/debug/libblog_os.a
 linker_script := src/arch/$(arch)/linker.ld
