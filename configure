@@ -1,0 +1,28 @@
+#!/bin/sh
+
+#
+# This script is used to configure some variables for the build system
+#
+# Args:
+#   - Prefix for the tools (when not present use '/usr/local')
+#
+
+# Set the prefix parameter
+if [ -z "$1" ]; then
+    prefix=/usr/local
+else
+    prefix=$1
+fi
+
+# This check if we are on a macOS system
+ismac() {
+	uname -s | grep Darwin
+}
+
+echo "#This was automatically generated">config.mak
+echo prefix=$prefix>>config.mak
+if ismac ; then
+	echo NO_AS_NEEDED=>>config.mak
+fi
+
+echo done, now run make
