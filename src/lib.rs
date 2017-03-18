@@ -1,18 +1,23 @@
-#![feature(lang_items)]
+#![feature(asm)]
 #![feature(const_fn, unique)]
+#![feature(lang_items)]
 #![no_std]
 
-extern crate rlibc;
-extern crate volatile;
-extern crate spin;
-extern crate multiboot2;
+extern crate bit_field;
 #[macro_use]
 extern crate bitflags;
+#[macro_use]
+extern crate lazy_static;
+extern crate multiboot2;
+extern crate rlibc;
+extern crate spin;
+extern crate volatile;
 extern crate x86;
 
 #[macro_use]
 mod vga_buffer;
 mod memory;
+mod interrupts;
 
 /// Enable the NXE bit to allow NO_EXECUTE pages.
 fn enable_nxe_bit() {
@@ -66,10 +71,27 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
                                                               multiboot_end,
                                                               memory_map_tag.memory_areas());
 
-    // TEST: remap the kernel
+    // enable NXE bit, to allow define none executable pages.
     enable_nxe_bit();
+
+    // set write protect bit in order to enable write protection on kernel mode.
     enable_write_protect_bit();
+
+    // remap the kernel
     memory::remap_the_kernel(&mut frame_allocator, boot_info);
+
+    // WIP: Initialize IDT system
+    interrupts::init();
+
+    fn divide_by_zero() {
+        unsafe {
+            asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel")
+        }
+    }
+
+    // provoke a divide-by-zero fault
+    divide_by_zero();
+
     println!("It did not crash!");
 
     loop {}
