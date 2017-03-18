@@ -1,11 +1,40 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::remap_the_kernel;
 use self::paging::PhysicalAddress;
+use multiboot2::BootInformation;
 
 mod area_frame_allocator;
 mod paging;
 
 pub const PAGE_SIZE: usize = 4096;
+
+pub fn init(boot_info: &BootInformation, multiboot_information_address: usize) {
+    assert_has_not_been_called!("memory::init must be called only once");
+
+    let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
+    let elf_sections_tag = boot_info.elf_sections_tag().expect("Memory map tag required");
+    let kernel_start = elf_sections_tag.sections().map(|s| s.addr).min().unwrap();
+    let kernel_end = elf_sections_tag.sections().map(|s| s.addr + s.size).max().unwrap();
+
+    let multiboot_start = multiboot_information_address;
+    let multiboot_end = multiboot_start + (boot_info.total_size as usize);
+
+    println!("kernel start: 0x{:x}, kernel end: 0x{:x}",
+             kernel_start,
+             kernel_end);
+    println!("multiboot start: 0x{:x}, multiboot end: 0x{:x}",
+             multiboot_start,
+             multiboot_end);
+
+    let mut frame_allocator = AreaFrameAllocator::new(kernel_start as usize,
+                                                      kernel_end as usize,
+                                                      multiboot_start,
+                                                      multiboot_end,
+                                                      memory_map_tag.memory_areas());
+
+    // remap the kernel
+    remap_the_kernel(&mut frame_allocator, boot_info);
+}
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {

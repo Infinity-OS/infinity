@@ -20,3 +20,7 @@ config.mak
 
 # OS Specific files
 .DS_Store
+
+.sconsign.dblite
+
+infinity-w-initium.zip
