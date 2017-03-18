@@ -2,6 +2,38 @@
 
 mod idt;
 
+/// This macro saves all scratch registers before calling an exception.
+macro_rules! save_scratch_registers {
+    () => {
+        asm!("push rax
+              push rcx
+              push rdx
+              push rsi
+              push rdi
+              push r8
+              push r9
+              push r10
+              push r11
+        " :::: "intel", "volatile");
+    }
+}
+
+/// This macro restores all scratch registers before calling an exception.
+macro_rules! restore_scratch_registers {
+    () => {
+        asm!("pop r11
+              pop r10
+              pop r9
+              pop r8
+              pop rdi
+              pop rsi
+              pop rdx
+              pop rcx
+              pop rax
+            " :::: "intel", "volatile");
+    }
+}
+
 /// This macro creates a wrapper for the handler in order to get the
 /// exception stack frame to pass it to the actual exception handler.
 macro_rules! handler {
@@ -9,11 +41,23 @@ macro_rules! handler {
         #[naked]
         extern "C" fn wrapper() -> ! {
             unsafe {
+                // save all scratch registers
+                save_scratch_registers!();
+
+                // align the stack, and call the handler passing the exception stack frame as a
+                // argument.
                 asm!("mov rdi, rsp
-                    sub rsp, 8 // align the stack pointer
+                    add rdi, 9*8 // calculate exception stack frame pointer
                     call $0"
-                    :: "i"($name as extern "C" fn(&ExceptionStackFrame) -> !)
+                    :: "i"($name as extern "C" fn(&ExceptionStackFrame))
                     : "rdi" : "intel");
+
+                // restore scratch registerns
+                restore_scratch_registers!();
+
+                // this allow us to return from an exception
+                asm!("iretq"
+                    :::: "intel", "volatile");
                 ::core::intrinsics::unreachable();
             }
         }
@@ -28,12 +72,27 @@ macro_rules! handler_with_error_code {
         #[naked]
         extern "C" fn wrapper() -> ! {
             unsafe {
-                asm!("pop rsi // pop error code into rsi
+                // save all scratch registers
+                save_scratch_registers!();
+
+                // align the stack, and call the handler passing the exception stack frame and the
+                // error code as a arguments.
+                asm!("mov rsi, [rsp + 9*8] // load error code into rsi
                     mov rdi, rsp
+                    add rsi, 10*8 // calculate exception stack frame pointer
                     sub rsp, 8 // align the stack pointer
-                    call $0"
-                    :: "i"($name as extern "C" fn(&ExceptionStackFrame, u64) -> !)
+                    call $0
+                    add rsp, 8 // under stack pointer alignment"
+                    :: "i"($name as extern "C" fn(&ExceptionStackFrame, u64))
                     : "rdi" : "intel");
+
+                // restore scratch registerns
+                restore_scratch_registers!();
+
+                // this allow us to return from an exception
+                asm!("add rsp, 8 // pop error code
+                    iretq"
+                    :::: "intel", "volatile");
                 ::core::intrinsics::unreachable();
             }
         }
@@ -51,6 +110,7 @@ lazy_static! {
 
         // set the handler for the zero division exception
         idt.set_handler(0, handler!(divide_by_zero_handler));
+        idt.set_handler(3, handler!(breakpoint_handler));
         idt.set_handler(6, handler!(invalid_opcode_handler));
         idt.set_handler(14, handler_with_error_code!(page_fault_exception));
 
@@ -85,20 +145,21 @@ pub fn init() {
 }
 
 /// Handler for the division by zero exception
-extern "C" fn divide_by_zero_handler(stack_frame: &ExceptionStackFrame) -> ! {
+extern "C" fn divide_by_zero_handler(stack_frame: &ExceptionStackFrame) {
     // print out the error message and the stack_frame
     println!("\nEXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
     loop {}
 }
 
 /// Handler for a invalid opcode exception
-extern "C" fn invalid_opcode_handler(stack_frame: &ExceptionStackFrame) -> ! {
+extern "C" fn invalid_opcode_handler(stack_frame: &ExceptionStackFrame) {
     println!("\nEXCEPTION: INVALID OPCODE at {:#x}\n{:#?}\n",
         stack_frame.instruction_pointer, stack_frame);
     loop {}
 }
 
-extern "C" fn page_fault_exception(stack_frame: &ExceptionStackFrame, error_code: u64) -> ! {
+/// Handler for page faults
+extern "C" fn page_fault_exception(stack_frame: &ExceptionStackFrame, error_code: u64) {
     use x86::shared::control_regs;
 
     println!("\nEXCEPTION: PAGE FAULT while accessing {:#x}\
@@ -107,4 +168,10 @@ extern "C" fn page_fault_exception(stack_frame: &ExceptionStackFrame, error_code
         PageFaultErrorCode::from_bits(error_code).unwrap(),
         stack_frame);
     loop {}
+}
+
+/// Handler to catch breakpoint exceptions
+extern "C" fn breakpoint_handler(stack_frame: &ExceptionStackFrame) {
+    println!("\nEXCEPTION: BREAKPOINT at {:#x}\n{:#?}",
+        stack_frame.instruction_pointer, stack_frame);
 }
