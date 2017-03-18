@@ -1,6 +1,8 @@
 #![feature(asm)]
 #![feature(const_fn, unique)]
+#![feature(core_intrinsics)]
 #![feature(lang_items)]
+#![feature(naked_functions)]
 #![no_std]
 #![feature(alloc, collections)]
 
@@ -68,8 +70,9 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // set up guard page and map the heap pages
     let mut memory_controller = memory::init(boot_info, multiboot_information_address);
 
-    // WIP: Initialize IDT system
+    // Initialize IDT
     interrupts::init();
+
 
     fn divide_by_zero() {
         unsafe {
@@ -83,6 +86,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     use alloc::boxed::Box;
     let heap_test = Box::new(42);
+
 
     println!("It did not crash!");
 
