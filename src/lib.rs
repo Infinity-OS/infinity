@@ -16,6 +16,7 @@ extern crate multiboot2;
 extern crate rlibc;
 extern crate spin;
 extern crate volatile;
+#[macro_use]
 extern crate x86;
 
 extern crate bump_allocator;
@@ -73,8 +74,11 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // Initialize IDT
     interrupts::init();
 
-    use alloc::boxed::Box;
-    let heap_test = Box::new(42);
+    // trigger a breakpoint exception
+    unsafe { int!(3) };
+
+    // use alloc::boxed::Box;
+    // let heap_test = Box::new(42);
 
     println!("It did not crash!");
 
