@@ -82,17 +82,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // remap the kernel
     memory::remap_the_kernel(&mut frame_allocator, boot_info);
 
-    // WIP: Initialize IDT system
+    // Initialize IDT
     interrupts::init();
-
-    fn divide_by_zero() {
-        unsafe {
-            asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel")
-        }
-    }
-
-    // provoke a divide-by-zero fault
-    divide_by_zero();
 
     println!("It did not crash!");
 

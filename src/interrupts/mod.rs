@@ -1,5 +1,9 @@
+//! # Exception handler system
+
 mod idt;
 
+/// This macro creates a wrapper for the handler in order to get the
+/// exception stack frame to pass it to the actual exception handler.
 macro_rules! handler {
     ($name: ident) => {{
         #[naked]
@@ -27,6 +31,7 @@ lazy_static! {
 
         // set the handler for the zero division exception
         idt.set_handler(0, handler!(divide_by_zero_handler));
+        idt.set_handler(6, handler!(invalid_opcode_handler));
 
         idt
     };
@@ -52,5 +57,12 @@ pub fn init() {
 extern "C" fn divide_by_zero_handler(stack_frame: &ExceptionStackFrame) -> ! {
     // print out the error message and the stack_frame
     println!("\nEXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
+    loop {}
+}
+
+/// Handler for a invalid opcode exception
+extern "C" fn invalid_opcode_handler(stack_frame: &ExceptionStackFrame) -> ! {
+    println!("\nEXCEPTION: INVALID OPCODE at {:#x}\n{:#?}\n",
+        stack_frame.instruction_pointer, stack_frame);
     loop {}
 }
