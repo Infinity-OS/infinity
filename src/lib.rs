@@ -1,6 +1,8 @@
 #![feature(asm)]
 #![feature(const_fn, unique)]
+#![feature(core_intrinsics)]
 #![feature(lang_items)]
+#![feature(naked_functions)]
 #![no_std]
 
 extern crate bit_field;
