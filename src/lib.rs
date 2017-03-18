@@ -74,11 +74,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // Initialize IDT
     interrupts::init();
 
-    // trigger a breakpoint exception
-    unsafe { int!(3) };
-
-    // use alloc::boxed::Box;
-    // let heap_test = Box::new(42);
+    use alloc::boxed::Box;
+    let heap_test = Box::new(42);
 
     println!("It did not crash!");
 
