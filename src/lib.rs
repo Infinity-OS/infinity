@@ -73,20 +73,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // Initialize IDT
     interrupts::init();
 
-
-    fn divide_by_zero() {
-        unsafe {
-            asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel")
-        }
-    }
-
-    // provoke a divide-by-zero fault
-    divide_by_zero();
-
-
     use alloc::boxed::Box;
     let heap_test = Box::new(42);
-
 
     println!("It did not crash!");
 
