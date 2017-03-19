@@ -69,7 +69,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     enable_write_protect_bit();
 
     // set up guard page and map the heap pages
-    let mut memory_controller = memory::init(boot_info, multiboot_information_address);
+    let mut memory_controller = memory::init(boot_info);
 
     // Initialize IDT
     interrupts::init();

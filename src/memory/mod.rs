@@ -7,30 +7,31 @@ mod area_frame_allocator;
 mod paging;
 mod stack_allocator;
 
+/// Size of a page
 pub const PAGE_SIZE: usize = 4096;
 
-pub fn init(boot_info: &BootInformation, multiboot_information_address: usize) {
+/// Initialize the memory system
+pub fn init(boot_info: &BootInformation) {
+    // insure that this function is only called once
     assert_has_not_been_called!("memory::init must be called only once");
 
+    // get the bootloader memory tag
     let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
-    let elf_sections_tag = boot_info.elf_sections_tag().expect("Memory map tag required");
+
+    // get the elf sections bootloader tag
+    let elf_sections_tag = boot_info.elf_sections_tag().expect("Elf sections tag required");
+
+    // get the kernel start address
     let kernel_start = elf_sections_tag.sections().map(|s| s.addr).min().unwrap();
+
+    // get the kernel end address
     let kernel_end = elf_sections_tag.sections().map(|s| s.addr + s.size).max().unwrap();
 
-    let multiboot_start = multiboot_information_address;
-    let multiboot_end = multiboot_start + (boot_info.total_size as usize);
-
-    println!("kernel start: 0x{:x}, kernel end: 0x{:x}",
-             kernel_start,
-             kernel_end);
-    println!("multiboot start: 0x{:x}, multiboot end: 0x{:x}",
-             multiboot_start,
-             multiboot_end);
-
+    // initialize the frame allocator
     let mut frame_allocator = AreaFrameAllocator::new(kernel_start as usize,
                                                       kernel_end as usize,
-                                                      multiboot_start,
-                                                      multiboot_end,
+                                                      boot_info.start_address(),
+                                                      boot_info.end_address(),
                                                       memory_map_tag.memory_areas());
 
     // remap the kernel
