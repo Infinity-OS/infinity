@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="Inifnity OS" width="350" src="https://raw.githubusercontent.com/Infinity-OS/infinity/master/logo.png">
+    <img alt="Inifnity OS" width="200" src="https://raw.githubusercontent.com/Infinity-OS/infinity/master/logo.png">
 </p>
 
 **Infinity OS** is an operative system written in Rust, with focus on security, simplicity and intelligence.
