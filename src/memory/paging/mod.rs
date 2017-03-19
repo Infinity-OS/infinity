@@ -26,8 +26,8 @@ pub struct Page {
 impl Page {
     pub fn containing_address(address: VirtualAddress) -> Page {
         assert!(address < 0x0000_8000_0000_0000 || address >= 0xffff_8000_0000_0000,
-                "invalid address: 0x{:x}",
-                address);
+        "invalid address: 0x{:x}",
+        address);
         Page { number: address / PAGE_SIZE }
     }
 
@@ -163,9 +163,9 @@ pub struct InactivePageTable {
 
 impl InactivePageTable {
     pub fn new(frame: Frame,
-                active_table: &mut ActivePageTable,
-                temporary_page: &mut TemporaryPage)
-                -> InactivePageTable
+               active_table: &mut ActivePageTable,
+               temporary_page: &mut TemporaryPage)
+               -> InactivePageTable
     {
         {
             let table = temporary_page.map_table_frame(frame.clone(), active_table);
@@ -183,7 +183,7 @@ impl InactivePageTable {
 }
 
 /// Remap the kernel
-pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation)
+pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
     where A: FrameAllocator
 {
     use core::ops::Range;
@@ -240,4 +240,7 @@ pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation)
     // turn the old p4 page into a guard page
     let old_p4_page = Page::containing_address(old_table.p4_frame.start_address());
     active_table.unmap(old_p4_page, allocator);
+    println!("guard page at {:#x}", old_p4_page.start_address());
+
+    active_table
 }
