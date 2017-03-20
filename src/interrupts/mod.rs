@@ -2,6 +2,8 @@
 
 mod idt;
 
+use memory::MemoryController;
+
 /// This macro saves all scratch registers before calling an exception.
 macro_rules! save_scratch_registers {
     () => {
@@ -140,7 +142,10 @@ struct ExceptionStackFrame {
 }
 
 /// Initialize the IDT
-pub fn init() {
+pub fn init(memory_controller: &mut MemoryController) {
+    // allocate a double fault stack
+    let double_fault_stack = memory_controller.alloc_stack(1).expect("could not allocate double fault stack");
+
     // load the IDT table into the CPU
     IDT.load();
 }

@@ -72,7 +72,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     let mut memory_controller = memory::init(boot_info);
 
     // Initialize IDT
-    interrupts::init();
+    interrupts::init(&mut memory_controller);
 
     // trigger a debug exception
     fn stack_overflow() {
