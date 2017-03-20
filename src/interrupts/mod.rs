@@ -3,6 +3,9 @@
 use memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
+use spin::Once;
+
+mod gdt;
 
 const DOUBLE_FAULT_IST_INDEX: usize = 0;
 
@@ -27,16 +30,44 @@ lazy_static! {
     };
 }
 
+static TSS: Once<TaskStateSegment> = Once::new();
+static GDT: Once<gdt::Gdt> = Once::new();
+
 /// Initialize the IDT
 pub fn init(memory_controller: &mut MemoryController) {
+    use x86_64::instructions::segmentation::set_cs;
+    use x86_64::instructions::tables::load_tss;
     use x86_64::VirtualAddress;
+    use x86_64::structures::gdt::SegmentSelector;
 
     // allocate a double fault stack
     let double_fault_stack = memory_controller.alloc_stack(1).expect("could not allocate double fault stack");
 
     // configure the task state segment
-    let mut tss = TaskStateSegment::new();
-    tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = VirtualAddress(double_fault_stack.top());
+    let tss = TSS.call_once(|| {
+        let mut tss = TaskStateSegment::new();
+        tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = VirtualAddress(double_fault_stack.top());
+        tss
+    });
+
+    // configure GDT
+    let mut code_selector = SegmentSelector(0);
+    let mut tss_selector = SegmentSelector(0);
+    let gdt = GDT.call_once(|| {
+        let mut gdt = gdt::Gdt::new();
+        code_selector = gdt.add_entry(gdt::Descriptor::kernel_code_segment());
+        tss_selector = gdt.add_entry(gdt::Descriptor::tss_segment(&tss));
+        gdt
+    });
+    gdt.load();
+
+    unsafe {
+        // reload code segment register
+        set_cs(code_selector);
+
+        // load TSS
+        load_tss(tss_selector);
+    }
 
     // load the IDT table into the CPU
     IDT.load();
