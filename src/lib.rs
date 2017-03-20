@@ -1,6 +1,6 @@
+#![feature(abi_x86_interrupt)]
 #![feature(asm)]
 #![feature(const_fn, unique)]
-#![feature(core_intrinsics)]
 #![feature(lang_items)]
 #![feature(naked_functions)]
 #![no_std]
@@ -16,8 +16,7 @@ extern crate multiboot2;
 extern crate rlibc;
 extern crate spin;
 extern crate volatile;
-#[macro_use]
-extern crate x86;
+extern crate x86_64;
 
 extern crate bump_allocator;
 extern crate alloc;
@@ -34,7 +33,7 @@ mod interrupts;
 
 /// Enable the NXE bit to allow NO_EXECUTE pages.
 fn enable_nxe_bit() {
-    use x86::shared::msr::{IA32_EFER, rdmsr, wrmsr};
+    use x86_64::registers::msr::{IA32_EFER, rdmsr, wrmsr};
 
     let nxe_bit = 1 << 11;
     unsafe {
@@ -45,9 +44,9 @@ fn enable_nxe_bit() {
 
 /// This enables the write protect bit in order to enable write protection on kernel mode.
 fn enable_write_protect_bit() {
-    use x86::shared::control_regs::{cr0, cr0_write, CR0_WRITE_PROTECT};
+    use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
 
-    unsafe { cr0_write(cr0() | CR0_WRITE_PROTECT) };
+    unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
 }
 
 #[no_mangle]

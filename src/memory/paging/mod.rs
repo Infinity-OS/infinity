@@ -113,26 +113,30 @@ impl ActivePageTable {
                    f: F)
         where F: FnOnce(&mut Mapper)
     {
-        use x86::shared::{control_regs, tlb};
-        let flush_tlb = || unsafe { tlb::flush_all() };
+        use x86_64::registers::control_regs;
+        use x86_64::instructions::tlb;
 
         {
             // backup the original CR3 address in order to restore it lately
-            let backup = Frame::containing_address(unsafe { control_regs::cr3() } as usize);
+            let backup = Frame::containing_address(control_regs::cr3().0 as usize);
 
             // map temporary_page to current p4 table
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
 
             // overwrite recursive mapping and flush the tlb to ensure the correct page translation
             self.p4_mut()[511].set(table.p4_frame.clone(), PRESENT | WRITABLE);
-            flush_tlb();
+
+            // flush TLB
+            tlb::flush_all();
 
             // execute f in the new context
             f(self);
 
             // restore recursive mapping to original p4 table and flush the tlb again
             p4_table[511].set(backup, PRESENT | WRITABLE);
-            flush_tlb();
+
+            // flush TLB
+            tlb::flush_all();
         }
 
         temporary_page.unmap(self);
@@ -140,16 +144,17 @@ impl ActivePageTable {
 
     /// Switch context
     pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
-        use x86::shared::control_regs;
+        use x86_64::PhysicalAddress;
+        use x86_64::registers::control_regs;
 
         // store the ond table
         let old_table = InactivePageTable {
-            p4_frame: Frame::containing_address(unsafe { control_regs::cr3() } as usize),
+            p4_frame: Frame::containing_address(control_regs::cr3().0 as usize),
         };
 
         // switch to the new page table
         unsafe {
-            control_regs::cr3_write(new_table.p4_frame.start_address());
+            control_regs::cr3_write(PhysicalAddress(new_table.p4_frame.start_address() as u64));
         }
 
         // return the old table
