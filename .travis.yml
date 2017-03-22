@@ -1,3 +1,4 @@
+sudo: required
 language: rust
 
 rust:
@@ -5,7 +6,13 @@ rust:
 
 cache: cargo
 
+os:
+  - linux
+
+dist: trusty
+
 before_script:
+  - sudo apt-get install -qq nasm
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=$TRAVIS_RUST_VERSION -y
   - source ~/.cargo/env
   - rustup component add rust-src
@@ -14,17 +21,10 @@ before_script:
   - (test -x $HOME/.cargo/bin/xargo || cargo install xargo)
   - cargo install-update -a
 
-sudo: false
-
 notifications:
   email:
     on_success: never
     on_failure: change
 
-  addons:
-    apt:
-      packages:
-        - nasm
-
 script:
-  - make
+  - ./configure && make
