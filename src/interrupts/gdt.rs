@@ -13,7 +13,7 @@ impl Gdt {
     pub fn new() -> Gdt {
         Gdt {
             table: [0; 8],
-            next_free: 0
+            next_free: 1
         }
     }
 

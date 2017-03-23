@@ -73,26 +73,6 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // Initialize IDT
     interrupts::init(&mut memory_controller);
 
-    // trigger a debug exception
-    fn stack_overflow() {
-        stack_overflow(); // for each recursion, the return address is pushed
-    }
-
-    // trigger a stack overflow
-    stack_overflow();
-
-    use alloc::boxed::Box;
-    let mut heap_test = Box::new(42);
-    *heap_test -= 15;
-    let heap_test2 = Box::new("hello");
-    println!("{:?} {:?}", heap_test, heap_test2);
-
-    let mut vec_test = vec![1,2,3,4,5,6,7];
-    vec_test[3] = 42;
-    for i in &vec_test {
-        print!("{} ", i);
-    }
-
     println!("It did not crash!");
 
     loop {}
