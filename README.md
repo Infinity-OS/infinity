@@ -45,4 +45,10 @@ $ make iso
 
 # Clean all generated files
 $ make clean
+
+# Start QEMU in debug mode
+$ make debug
+
+# Start a debug session with Radare2
+$ make r2
 ```

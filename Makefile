@@ -36,6 +36,9 @@ run: $(iso)
 debug: $(iso)
 	@qemu-system-x86_64 -cdrom $(iso) -s -S
 
+r2:
+	@r2 -d gdb://localhost:1234
+
 iso: $(iso)
 
 $(iso): $(kernel) $(grub_cfg)
