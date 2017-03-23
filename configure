@@ -11,7 +11,7 @@
 
 # Set the prefix parameter
 if [ -z "$1" ]; then
-    prefix=/usr/local/
+    prefix=
 else
     prefix=$1
 fi
