@@ -18,7 +18,9 @@ lazy_static! {
         // create a new IDT structure
         let mut idt = Idt::new();
 
+        // Set up exceptions
         idt.divide_by_zero.set_handler_fn(divide_by_zero_handler);
+        idt.debug.set_handler_fn(debug_handler);
         idt.breakpoint.set_handler_fn(breakpoint_handler);
         idt.invalid_opcode.set_handler_fn(invalid_opcode_handler);
         idt.page_fault.set_handler_fn(page_fault_exception);

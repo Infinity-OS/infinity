@@ -7,6 +7,12 @@ pub extern "x86-interrupt" fn divide_by_zero_handler(stack_frame: &mut Exception
     loop {}
 }
 
+/// Handler for a debug exception
+pub extern "x86-interrupt" fn debug_handler(stack_frame: &mut ExceptionStackFrame) {
+    println!("\nEXCEPTION: DEBUG\n{:#?}", stack_frame);
+    loop {}
+}
+
 /// Handler for a invalid opcode exception
 pub extern "x86-interrupt" fn invalid_opcode_handler(stack_frame: &mut ExceptionStackFrame) {
     println!("\nEXCEPTION: INVALID OPCODE at {:#x}\n{:#?}\n",
