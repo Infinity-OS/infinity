@@ -44,6 +44,7 @@ lazy_static! {
         idt.virtualization.set_handler_fn(exceptions::virtualization);
         // 21 through 29 reserved
         idt.security_exception.set_handler_fn(exceptions::security_exception);
+        // 31 reserved
 
         idt
     };
