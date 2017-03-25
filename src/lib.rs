@@ -5,10 +5,12 @@
 #![feature(naked_functions)]
 #![no_std]
 #![feature(alloc, collections)]
+#![feature(core_intrinsics)]
 
 extern crate bit_field;
 #[macro_use]
 extern crate bitflags;
+extern crate raw_cpuid;
 #[macro_use]
 extern crate lazy_static;
 extern crate multiboot2;
@@ -28,6 +30,9 @@ extern crate once;
 #[macro_use]
 /// Console handling
 pub mod vga_buffer;
+
+/// Devices management
+pub mod device;
 
 /// Memory management
 pub mod memory;

@@ -1,11 +1,13 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
+pub use self::paging::ActivePageTable;
 pub use self::paging::remap_the_kernel;
 pub use self::stack_allocator::Stack;
+
 use self::paging::PhysicalAddress;
 use multiboot2::BootInformation;
 
 mod area_frame_allocator;
-mod paging;
+pub mod paging;
 mod stack_allocator;
 
 /// Size of a page
@@ -78,7 +80,7 @@ pub struct Frame {
 }
 
 impl Frame {
-    fn containing_address(address: usize) -> Frame {
+    pub fn containing_address(address: usize) -> Frame {
         Frame { number: address / PAGE_SIZE }
     }
 
@@ -123,7 +125,7 @@ pub trait FrameAllocator {
 }
 
 pub struct MemoryController {
-    active_table: paging::ActivePageTable,
+    pub active_table: paging::ActivePageTable,
     frame_allocator: AreaFrameAllocator,
     stack_allocator: stack_allocator::StackAllocator,
 }
@@ -143,5 +145,17 @@ impl MemoryController {
             ref mut stack_allocator } = self;
 
         stack_allocator.alloc_stack(active_table, frame_allocator, size_in_pages)
+    }
+
+    /// Maps the page to the frame with the provided flags.
+    /// The `PRESENT` flag is added by default. Needs a `FrameAllocator` as it might need to create
+    /// new page tables.
+    pub fn map_to(&mut self, page: paging::Page, frame: Frame, flags: paging::entry::EntryFlags) {
+        self.active_table.map_to(page, frame, flags, &mut self.frame_allocator);
+    }
+
+    /// Flush the TLB table
+    pub fn flush_all(&mut self) {
+        self.active_table.flush_all();
     }
 }

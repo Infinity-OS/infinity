@@ -8,7 +8,7 @@ pub use self::mapper::Mapper;
 use core::ops::{Add, Deref, DerefMut};
 use multiboot2::BootInformation;
 
-mod entry;
+pub mod entry;
 mod mapper;
 mod table;
 mod temporary_page;
@@ -114,7 +114,6 @@ impl ActivePageTable {
         where F: FnOnce(&mut Mapper)
     {
         use x86_64::registers::control_regs;
-        use x86_64::instructions::tlb;
 
         {
             // backup the original CR3 address in order to restore it lately
@@ -127,7 +126,7 @@ impl ActivePageTable {
             self.p4_mut()[511].set(table.p4_frame.clone(), PRESENT | WRITABLE);
 
             // flush TLB
-            tlb::flush_all();
+            self.flush_all();
 
             // execute f in the new context
             f(self);
@@ -136,7 +135,7 @@ impl ActivePageTable {
             p4_table[511].set(backup, PRESENT | WRITABLE);
 
             // flush TLB
-            tlb::flush_all();
+            self.flush_all();
         }
 
         temporary_page.unmap(self);
@@ -159,6 +158,13 @@ impl ActivePageTable {
 
         // return the old table
         old_table
+    }
+
+    /// Flush all the TLB table
+    pub fn flush_all(&mut self) {
+        use x86_64::instructions::tlb;
+
+        unsafe { tlb::flush_all(); }
     }
 }
 

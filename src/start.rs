@@ -2,6 +2,7 @@ use vga_buffer;
 use memory;
 use multiboot2;
 use interrupts;
+use device;
 
 /// Enable the NXE bit to allow NO_EXECUTE pages.
 fn enable_nxe_bit() {
@@ -44,6 +45,9 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     // Initialize IDT
     interrupts::init(&mut memory_controller);
+
+    // Initialize devices
+    device::init(&mut memory_controller);
 
     println!("It did not crash!");
 
