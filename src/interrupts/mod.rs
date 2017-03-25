@@ -6,6 +6,7 @@ use x86_64::structures::idt::Idt;
 use spin::Once;
 
 mod gdt;
+mod ipi;
 mod exceptions;
 
 const DOUBLE_FAULT_IST_INDEX: usize = 0;
@@ -45,6 +46,10 @@ lazy_static! {
         // 21 through 29 reserved
         idt.security_exception.set_handler_fn(exceptions::security_exception);
         // 31 reserved
+
+        // set IPI handler
+        // TODO implement this properly. For this this is just a null interrupt.
+        idt.interrupts[64].set_handler_fn(ipi::ipi);
 
         idt
     };

@@ -18,6 +18,13 @@ pub unsafe fn init(memory_controller: &mut MemoryController) {
     LOCAL_APIC.init(memory_controller);
 }
 
+/// End of interrupt register
+const APIC_REG_EOI: u32 = 0xb0;
+/// Interrupt Control Register (low)
+const APIC_REG_ICR_LOW: u32 = 0x300;
+/// Interrupt Control Register (higher)
+const APIC_REG_ICR_HIGH: u32 = 0x310;
+
 /// Local APIC
 pub struct LocalApic {
     base: usize,
@@ -79,9 +86,71 @@ impl LocalApic {
     ///
     /// ## Returns
     /// The register value.
-    fn store(&self, reg: u32) -> u32 {
+    fn read(&self, reg: u32) -> u32 {
         unsafe {
-            volatile_load((self.base + reg as usize) as *const u32);
+            volatile_load((self.base + reg as usize) as *const u32)
+        }
+    }
+
+    /// Read the Interrupt Command Register (ICR).
+    ///
+    /// ## Returns
+    /// The value of the ICR register.
+    pub fn icr(&self) -> u64 {
+        if self.x2_support {
+            unsafe { rdmsr(IA32_X2APIC_ICR) }
+        } else {
+            unsafe {
+                (self.read(APIC_REG_ICR_HIGH) as u64) << 32 | self.read(APIC_REG_ICR_LOW) as u64
+            }
+        }
+    }
+
+    /// Set the value for the Interrupt Command Register (ICR).
+    ///
+    /// ## Parameters
+    /// - `value`: new value for the register.
+    pub fn set_icr(&self, value: u64) {
+        if self.x2_support {
+            unsafe { wrmsr(IA32_X2APIC_ICR, value); }
+        } else {
+            unsafe {
+                while self.read(APIC_REG_ICR_LOW) & 1 << 12 == 1 << 12 {}
+                self.write(APIC_REG_ICR_HIGH, (value >> 32) as u32);
+                self.write(APIC_REG_ICR_LOW, value as u32);
+                while self.read(APIC_REG_ICR_LOW) & 1 << 12 == 1 << 12 { }
+            }
+        }
+    }
+
+    /// Throw an Inter-Processor Interrupt.
+    ///
+    /// ## Parameters
+    /// - `apic_id`: LAPIC's ID of destination.
+    pub fn inter_processor_interrupt(&mut self, apic_id: usize) {
+        let mut icr = 0x4040;
+
+        // Set the destination
+        if self.x2_support {
+            // bits 63:32
+            icr |= (apic_id as u64) << 32;
+        } else {
+            // bits 63:56
+            icr |= (apic_id as u64) << 56;
+        }
+
+        // set the ICR register
+        self.set_icr(icr);
+    }
+
+    /// Specific End of Interrupt
+    pub fn end_of_interrupt(&mut self) {
+        unsafe {
+            if self.x2_support {
+                wrmsr(IA32_X2APIC_EOI, 0);
+            } else {
+                self.write(APIC_REG_EOI, 0)
+            }
         }
     }
 }
