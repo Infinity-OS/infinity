@@ -43,6 +43,9 @@ pub mod interrupts;
 /// Initialization and start function
 pub mod start;
 
+/// Timer functions
+pub mod time;
+
 #[cfg(not(test))]
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
