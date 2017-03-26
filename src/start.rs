@@ -51,7 +51,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     // TODO Read ACPI tables, starts APs
 
-    // TODO Initialize all the non-core devices
+    // Initialize all the non-core devices
+    device::init_non_core();
 
     println!("It did not crash!");
 
