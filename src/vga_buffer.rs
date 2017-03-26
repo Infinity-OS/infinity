@@ -5,6 +5,8 @@ use core::fmt;
 use spin::Mutex;
 use volatile::Volatile;
 
+use device::serial::COM1;
+
 // macros definition
 macro_rules! println {
     ($fmt:expr) => (print!(concat!($fmt, "\n")));
@@ -171,6 +173,12 @@ impl fmt::Write for Writer {
         for byte in s.bytes() {
             self.write_byte(byte)
         }
+
+        // If the console is enable, also print out to the console
+        if COM1.lock().is_enable() {
+            COM1.lock().write_str(s);
+        }
+
         Ok(())
     }
 }

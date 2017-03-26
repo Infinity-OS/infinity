@@ -2,6 +2,7 @@ use memory::MemoryController;
 
 pub mod local_apic;
 pub mod rtc;
+pub mod serial;
 
 /// Initialize some devices
 pub fn init(memory_controller: &mut MemoryController) {
@@ -13,4 +14,5 @@ pub fn init(memory_controller: &mut MemoryController) {
 /// Initialize all non core devices
 pub fn init_non_core() {
     rtc::init();
+    serial::init();
 }

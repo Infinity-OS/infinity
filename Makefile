@@ -22,6 +22,11 @@ assembly_source_files := $(wildcard src/arch/$(arch)/*.asm)
 assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
 	build/arch/$(arch)/%.o, $(assembly_source_files))
 
+# Qemu variables
+QEMU=qemu-system-$(arch)
+QEMUFLAGS=-serial mon:stdio -d cpu_reset -d guest_errors
+QEMUFLAGS+=-smp 4 -m 1024
+
 .PHONY: all clean run iso cargo
 
 all: $(kernel)
@@ -31,7 +36,7 @@ clean:
 	@rm -rf build
 
 run: $(iso)
-	@qemu-system-x86_64 -cdrom $(iso) -s
+	$(QEMU) $(QEMUFLAGS) -cdrom $(iso) -s
 
 debug: $(iso)
 	@qemu-system-x86_64 -cdrom $(iso) -s -S
