@@ -14,8 +14,8 @@ spin = "0.4.5"
 volatile = "0.1.0"
 x86_64 = "0.1.1"
 
-[dependencies.bump_allocator]
-path = "libs/bump_allocator"
+[dependencies.hole_list_allocator]
+path = "libs/hole_list_allocator"
 
 [dependencies.lazy_static]
 features = ["spin_no_std"]
