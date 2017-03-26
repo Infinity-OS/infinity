@@ -49,12 +49,6 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // Initialize devices
     device::init(&mut memory_controller);
 
-    //  Allocation test
-    for i in 0..1000 {
-        println!("\n\nTesting hole allocator: {}",i);
-        format!("Some String");
-    }
-
     // TODO Read ACPI tables, starts APs
 
     // Initialize all the non-core devices
