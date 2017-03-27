@@ -1,66 +1,18 @@
-#![feature(abi_x86_interrupt)]
-#![feature(asm)]
-#![feature(const_fn, unique)]
-#![feature(lang_items)]
-#![feature(naked_functions)]
+//! The Infinity OS Kernel is a µkernel with focus on performance, multi-core system, security, and
+//! no legacy components.
+
 #![no_std]
-#![feature(alloc, collections)]
-#![feature(core_intrinsics)]
 
-extern crate bit_field;
+/// Architecture specific items (x86_64)
+#[cfg(all(not(test), target_arch = "x86_64"))]
 #[macro_use]
-extern crate bitflags;
-extern crate raw_cpuid;
-#[macro_use]
-extern crate lazy_static;
-extern crate multiboot2;
-extern crate rlibc;
-extern crate spin;
-extern crate volatile;
-extern crate x86_64;
+extern crate arch_x86_64 as arch;
 
-extern crate hole_list_allocator;
-extern crate alloc;
-#[macro_use]
-extern crate collections;
-
-#[macro_use]
-extern crate once;
-
-#[macro_use]
-/// Console handling
-pub mod vga_buffer;
-
-/// Devices management
-pub mod device;
-
-/// Memory management
-pub mod memory;
-
-/// Interrupt instructions
-pub mod interrupts;
-
-/// Initialization and start function
-pub mod start;
-
-/// Timer functions
-pub mod time;
-
-#[cfg(not(test))]
-#[lang = "eh_personality"]
-extern "C" fn eh_personality() {}
-
-#[cfg(not(test))]
-#[lang = "panic_fmt"]
+/// This is the kernel entry point for the primary CPU. The arch crate is responsible for calling
+/// this.
 #[no_mangle]
-pub extern "C" fn panic_fmt(fmt: core::fmt::Arguments, file: &'static str, line: u32) -> ! {
-    println!("\n\nPANIC in {} at line {}:", file, line);
-    println!("    {}", fmt);
-    loop {}
-}
+pub extern fn kmain() -> ! {
+    println!("It did not crash!");
 
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn _Unwind_Resume() -> ! {
-    loop {}
+    loop { }
 }

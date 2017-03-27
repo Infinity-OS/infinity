@@ -7,12 +7,15 @@ use volatile::Volatile;
 
 use device::serial::COM1;
 
-// macros definition
+/// Print with new line to console
+#[macro_export]
 macro_rules! println {
     ($fmt:expr) => (print!(concat!($fmt, "\n")));
     ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
 }
 
+/// Print to console
+#[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ({
             $crate::vga_buffer::print(format_args!($($arg)*));
