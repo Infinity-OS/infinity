@@ -1,12 +1,14 @@
 //! # Exception handler system
 
 use memory::MemoryController;
+use x86_64::PrivilegeLevel;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::Idt;
 use spin::Once;
 
 mod gdt;
 mod ipi;
+mod irq;
 mod exceptions;
 
 const DOUBLE_FAULT_IST_INDEX: usize = 0;
@@ -46,6 +48,9 @@ lazy_static! {
         // 21 through 29 reserved
         idt.security_exception.set_handler_fn(exceptions::security_exception);
         // 31 reserved
+
+        // set timer interrupt
+        idt.interrupts[0x40].set_handler_fn(irq::timer).set_privilege_level(PrivilegeLevel::Ring3);
 
         // set IPI handler
         // TODO implement this properly. For this this is just a null interrupt.

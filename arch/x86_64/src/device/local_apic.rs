@@ -24,6 +24,12 @@ const APIC_REG_EOI: u32 = 0xb0;
 const APIC_REG_ICR_LOW: u32 = 0x300;
 /// Interrupt Control Register (higher)
 const APIC_REG_ICR_HIGH: u32 = 0x310;
+/// Timer Local Vector Table Entry
+const APIC_REG_TIMER_LOCAL_VECTOR: u32 = 0x320;
+/// Timer Initial Count Register
+const APIC_REG_TIMER_INIT_COUNT: u32 = 0x380;
+/// Timer Divide Configuration Register
+const APIC_REG_TIMER_DIVIDE: u32 = 0x3e0;
 
 /// Local APIC
 pub struct LocalApic {
@@ -50,6 +56,9 @@ impl LocalApic {
         }
 
         self.init_ap();
+
+        // enable timer
+        self.enable_timer();
 
         println!("APIC: Initialized!\n\tBase address: 0x{:>016x}\n\tx2APIC support: {:#?}", self.base, self.x2_support);
     }
@@ -151,6 +160,20 @@ impl LocalApic {
             } else {
                 self.write(APIC_REG_EOI, 0)
             }
+        }
+    }
+
+    /// Enable timer.
+    pub fn enable_timer(&mut self) {
+        unsafe {
+            // Set the divider amount
+            wrmsr(APIC_REG_TIMER_DIVIDE, 0x3);
+
+            // Set the start count value
+            wrmsr(APIC_REG_TIMER_INIT_COUNT, 0x10000);
+
+            // Enable the time interrupt
+            wrmsr(APIC_REG_TIMER_LOCAL_VECTOR, (1<<17) | 0x40);
         }
     }
 }
