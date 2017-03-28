@@ -7,6 +7,9 @@ use memory::{ActivePageTable, MemoryController, Frame};
 use memory::paging::Page;
 use memory::paging::{VirtualAddress, PhysicalAddress};
 use memory::paging::entry;
+use self::rsdp::Rsdp;
+
+mod rsdp;
 
 pub fn init(memory_controller: &mut MemoryController) {
     let start_addr = 0xe0000;
@@ -25,5 +28,12 @@ pub fn init(memory_controller: &mut MemoryController) {
             // TODO Flushing TLB is really expensive, can we do this after mapping all pages?
             memory_controller.flush_all();
         }
+    }
+
+    // Now we need to search for the RSDP in order to get the RSDT or XSDT addresses.
+    if let Some(rsdp) = Rsdp::search(start_addr, end_addr) {
+        println!("ACPI: RSDP found");
+    } else {
+        println!("ACPI: no RSDP found");
     }
 }
