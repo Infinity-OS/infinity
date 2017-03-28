@@ -31,6 +31,9 @@ extern crate once;
 /// Console handling
 pub mod vga_buffer;
 
+/// ACPI manager
+pub mod acpi;
+
 /// Devices management
 pub mod device;
 

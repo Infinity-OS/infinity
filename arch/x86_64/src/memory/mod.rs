@@ -84,11 +84,11 @@ impl Frame {
         Frame { number: address / PAGE_SIZE }
     }
 
-    fn start_address(&self) -> PhysicalAddress {
+    pub fn start_address(&self) -> PhysicalAddress {
         self.number * PAGE_SIZE
     }
 
-    fn range_inclusive(start: Frame, end: Frame) -> FrameIter {
+    pub fn range_inclusive(start: Frame, end: Frame) -> FrameIter {
         FrameIter {
             start: start,
             end: end
@@ -100,7 +100,7 @@ impl Frame {
     }
 }
 
-struct FrameIter {
+pub struct FrameIter {
     start: Frame,
     end: Frame,
 }

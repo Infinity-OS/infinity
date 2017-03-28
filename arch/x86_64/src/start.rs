@@ -1,3 +1,4 @@
+use acpi;
 use vga_buffer;
 use memory;
 use multiboot2;
@@ -55,7 +56,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
         // Initialize devices
         device::init(&mut memory_controller);
 
-        // TODO Read ACPI tables, starts APs
+        // Read ACPI tables, starts APs
+        acpi::init(&mut memory_controller);
 
         // Initialize all the non-core devices
         device::init_non_core();
