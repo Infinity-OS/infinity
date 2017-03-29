@@ -126,7 +126,7 @@ pub trait FrameAllocator {
 
 pub struct MemoryController {
     pub active_table: paging::ActivePageTable,
-    frame_allocator: AreaFrameAllocator,
+    pub frame_allocator: AreaFrameAllocator,
     stack_allocator: stack_allocator::StackAllocator,
 }
 

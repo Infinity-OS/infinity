@@ -39,4 +39,13 @@ impl Rsdp {
 
         None
     }
+
+    /// Get the RSDT or XSDT address
+    pub fn sdt_address(&self) -> usize {
+        if self.revision >= 2 {
+            self.xsdt_address as usize
+        } else {
+            self.rsdt_address as usize
+        }
+    }
 }
