@@ -3,15 +3,19 @@
 //! References:
 //! - [ACPI 5](http://www.acpi.info/DOWNLOADS/ACPI_5_Errata%20A.pdf)
 
+use spin::Mutex;
+
 use memory::{ActivePageTable, MemoryController, Frame};
 use memory::paging::Page;
 use memory::paging::{VirtualAddress, PhysicalAddress};
 use memory::paging::entry;
+use self::fadt::Fadt;
 use self::rsdp::Rsdp;
 use self::rsdt::Rsdt;
 use self::sdt::Sdt;
 use self::xsdt::Xsdt;
 
+mod fadt;
 mod rsdp;
 mod rsdt;
 mod sdt;
@@ -60,6 +64,25 @@ fn get_sdt(sdt_address: usize, memory_controller: &mut MemoryController) -> &'st
 /// Parse a SDT
 fn parse_sdt(sdt: &'static Sdt, memory_controller: &mut MemoryController) {
     print!("\t");
+
+    // first, we print out the signature
+    for &chr in sdt.signature.iter() {
+        print!("{}", chr as char);
+    }
+
+    if let Some(fadt) = Fadt::new(sdt) {
+        // Print the DSDT address
+        println!(": {:x}", fadt.dsdt);
+
+        // parse the DSDT
+        let dsdt = get_sdt(fadt.dsdt as usize, memory_controller);
+        parse_sdt(dsdt, memory_controller);
+
+        // save the FADT reference
+        ACPI_TABLE.lock().fadt = Some(fadt)
+    } else {
+        println!(": Unknown");
+    }
 }
 
 /// Initialize ACPI.
@@ -115,3 +138,11 @@ pub fn init(memory_controller: &mut MemoryController) {
 
     // TODO Clean the allocated memory after looking for RSDP
 }
+
+/// ACPI manager structure
+pub struct Acpi {
+    pub fadt: Option<Fadt>
+}
+
+/// Static ACPI instance
+pub static ACPI_TABLE: Mutex<Acpi> = Mutex::new(Acpi { fadt: None });
