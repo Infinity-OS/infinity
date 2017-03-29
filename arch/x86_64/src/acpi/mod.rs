@@ -8,10 +8,14 @@ use memory::paging::Page;
 use memory::paging::{VirtualAddress, PhysicalAddress};
 use memory::paging::entry;
 use self::rsdp::Rsdp;
+use self::rsdt::Rsdt;
 use self::sdt::Sdt;
+use self::xsdt::Xsdt;
 
 mod rsdp;
+mod rsdt;
 mod sdt;
+mod xsdt;
 
 /// Get the SDT structure
 fn get_sdt(sdt_address: usize, memory_controller: &mut MemoryController) -> &'static Sdt {
@@ -53,6 +57,11 @@ fn get_sdt(sdt_address: usize, memory_controller: &mut MemoryController) -> &'st
     sdt
 }
 
+/// Parse a SDT
+fn parse_sdt(sdt: &'static Sdt, memory_controller: &mut MemoryController) {
+    print!("\t");
+}
+
 /// Initialize ACPI.
 pub fn init(memory_controller: &mut MemoryController) {
     let start_addr = 0xe0000;
@@ -76,14 +85,30 @@ pub fn init(memory_controller: &mut MemoryController) {
     // Now we need to search for the RSDP in order to get the RSDT or XSDT addresses.
     if let Some(rsdp) = Rsdp::search(start_addr, end_addr) {
         // map the (R|X)SDT into virtual memory
-        let xsdt = get_sdt(rsdp.sdt_address(), memory_controller);
+        let rxsdt = get_sdt(rsdp.sdt_address(), memory_controller);
 
         // print out the signature
-        for &chr in xsdt.signature.iter() {
+        for &chr in rxsdt.signature.iter() {
             print!("{}", chr as char);
         }
         println!(":");
 
+        // Check if is a RSDT or a XSDT table
+        if let Some(rsdt) = Rsdt::new(rxsdt) {
+            // Iterate each entry and parse it
+            for sdt_address in rsdt.iter() {
+                let sdt = get_sdt(sdt_address, memory_controller);
+                parse_sdt(sdt, memory_controller);
+            }
+        } else if let Some(xsdt) = Xsdt::new(rxsdt) {
+            // Iterate each entry and parse it
+            for sdt_address in xsdt.iter() {
+                let sdt = get_sdt(sdt_address, memory_controller);
+                parse_sdt(sdt, memory_controller);
+            }
+        } else {
+            println!("Unknown RSDT or XSDT signature");
+        }
     } else {
         println!("ACPI: no RSDP found");
     }
