@@ -9,12 +9,14 @@ use memory::{ActivePageTable, MemoryController, Frame};
 use memory::paging::Page;
 use memory::paging::{VirtualAddress, PhysicalAddress};
 use memory::paging::entry;
+use self::dsdt::Dsdt;
 use self::fadt::Fadt;
 use self::rsdp::Rsdp;
 use self::rsdt::Rsdt;
 use self::sdt::Sdt;
 use self::xsdt::Xsdt;
 
+mod dsdt;
 mod fadt;
 mod rsdp;
 mod rsdt;
@@ -71,7 +73,7 @@ fn parse_sdt(sdt: &'static Sdt, memory_controller: &mut MemoryController) {
     }
 
     if let Some(fadt) = Fadt::new(sdt) {
-        // Print the DSDT address
+        // Print the address
         println!(": {:x}", fadt.dsdt);
 
         // parse the DSDT
@@ -79,7 +81,13 @@ fn parse_sdt(sdt: &'static Sdt, memory_controller: &mut MemoryController) {
         parse_sdt(dsdt, memory_controller);
 
         // save the FADT reference
-        ACPI_TABLE.lock().fadt = Some(fadt)
+        ACPI_TABLE.lock().fadt = Some(fadt);
+    } else if let Some(dsdt) = Dsdt::new(sdt) {
+        // Print out the number of elements
+        println!(": {}", dsdt.data().len());
+
+        // Save the DSDT reference
+        ACPI_TABLE.lock().dsdt = Some(dsdt);
     } else {
         println!(": Unknown");
     }
@@ -141,8 +149,12 @@ pub fn init(memory_controller: &mut MemoryController) {
 
 /// ACPI manager structure
 pub struct Acpi {
-    pub fadt: Option<Fadt>
+    pub fadt: Option<Fadt>,
+    pub dsdt: Option<Dsdt>
 }
 
 /// Static ACPI instance
-pub static ACPI_TABLE: Mutex<Acpi> = Mutex::new(Acpi { fadt: None });
+pub static ACPI_TABLE: Mutex<Acpi> = Mutex::new(Acpi {
+    fadt: None,
+    dsdt: None
+});
