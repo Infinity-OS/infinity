@@ -34,6 +34,9 @@ pub mod vga_buffer;
 /// ACPI manager
 pub mod acpi;
 
+/// Architecture context
+pub mod context;
+
 /// Devices management
 pub mod device;
 
