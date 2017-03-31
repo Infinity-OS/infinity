@@ -10,6 +10,7 @@ int_like!(ContextId, AtomicContextId, usize, AtomicUsize);
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Status {
     Runnable,
+    Blocked,
     Exited(usize)
 }
 
@@ -36,4 +37,15 @@ pub struct Context {
     // pub name: Arc
 }
 
-impl Context {}
+impl Context {
+    pub fn new(id: ContextId) -> Context {
+        Context {
+            id: id,
+            parentId: ContextId::from(0),
+            status: Status::Blocked,
+            running: false,
+            arch: ::arch::context::Context::new(),
+            kstack: None
+        }
+    }
+}

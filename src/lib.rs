@@ -3,6 +3,7 @@
 
 #![feature(alloc, collections)]
 #![feature(const_fn)]
+#![feature(drop_types_in_const)]
 #![no_std]
 
 /// Architecture specific items (x86_64)
@@ -11,6 +12,8 @@
 extern crate arch_x86_64 as arch;
 
 extern crate alloc;
+extern crate collections;
+extern crate spin;
 
 #[macro_use]
 pub mod common;
@@ -21,6 +24,9 @@ pub mod context;
 /// this.
 #[no_mangle]
 pub extern fn kmain() -> ! {
+    // initialize the context sub-system
+    context::init();
+
     println!("It did not crash!");
 
     loop { }
