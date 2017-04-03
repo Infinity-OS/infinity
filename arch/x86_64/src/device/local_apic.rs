@@ -167,13 +167,13 @@ impl LocalApic {
     pub fn enable_timer(&mut self) {
         unsafe {
             // Set the divider amount
-            wrmsr(APIC_REG_TIMER_DIVIDE, 0x3);
+            self.write(APIC_REG_TIMER_DIVIDE, 0x3);
 
             // Set the start count value
-            wrmsr(APIC_REG_TIMER_INIT_COUNT, 0x10000);
+            self.write(APIC_REG_TIMER_INIT_COUNT, 0x10000);
 
             // Enable the time interrupt
-            wrmsr(APIC_REG_TIMER_LOCAL_VECTOR, (1<<17) | 0x40);
+            self.write(APIC_REG_TIMER_LOCAL_VECTOR, (1<<17) | 0x40);
         }
     }
 }
