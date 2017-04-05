@@ -7,8 +7,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use memory::{Frame, FrameAllocator};
-use multiboot2::{MemoryAreaIter, MemoryArea};
+use memory::{Frame, FrameAllocator, MemoryArea, MemoryAreaIter};
 
 /// A frame allocator that uses the memory areas from the multiboot information structure as
 /// source. The {kernel, multiboot}_{start, end} fields are used to avoid returning memory that is

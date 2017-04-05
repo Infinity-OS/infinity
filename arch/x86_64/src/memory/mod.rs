@@ -6,12 +6,62 @@ pub use self::stack_allocator::Stack;
 use self::paging::PhysicalAddress;
 use multiboot2::BootInformation;
 
+/// Frame allocator.
 mod area_frame_allocator;
+
+/// Paging system.
 pub mod paging;
+
+/// Stack allocator.
 mod stack_allocator;
 
 /// Size of a page
 pub const PAGE_SIZE: usize = 4096;
+
+/// A memory map area
+#[derive(Copy, Clone, Debug, Default)]
+#[repr(C)]
+pub struct MemoryArea {
+    pub base_addr: u64,
+    pub length: u64,
+    pub _type: u32,
+    pub acpi: u32
+}
+
+#[derive(Clone)]
+pub struct MemoryAreaIter {
+    index: usize
+}
+
+impl MemoryAreaIter {
+    pub fn new() -> Self {
+        MemoryAreaIter {
+            index: 0
+        }
+    }
+}
+
+impl Iterator for MemoryAreaIter {
+    type Item = &'static MemoryArea;
+    fn next(&mut self) -> Option<&'static MemoryArea> {
+        while self.index < unsafe { MEMORY_MAP.len() } {
+            // get the entry in the current index
+            let entry = unsafe { &MEMORY_MAP[self.index] };
+
+            // increment the index
+            self.index += 1;
+
+            if entry._type == 1 {
+                return Some(entry)
+            }
+        }
+
+        None
+    }
+}
+
+/// The current memory map.
+static mut MEMORY_MAP: [MemoryArea; 512] = [MemoryArea { base_addr: 0, length: 0, _type: 0, acpi: 0 }; 512];
 
 /// Initialize the memory system
 ///
@@ -34,12 +84,27 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     // get the kernel end address
     let kernel_end = elf_sections_tag.sections().map(|s| s.addr + s.size).max().unwrap();
 
+    // make a entire copy from the multiboot areas. This is needed in order to put the MemoryController available to the kernel.
+    unsafe {
+        let mut index = 0;
+        for cur_area in memory_map_tag.memory_areas() {
+            let mut entry = &mut MEMORY_MAP[index];
+
+            entry.base_addr = cur_area.base_addr;
+            entry.length = cur_area.length;
+            entry._type = 1;
+
+            // increment the index
+            index += 1;
+        }
+    }
+
     // initialize the frame allocator
     let mut frame_allocator = AreaFrameAllocator::new(kernel_start as usize,
                                                       kernel_end as usize,
                                                       boot_info.start_address(),
                                                       boot_info.end_address(),
-                                                      memory_map_tag.memory_areas());
+                                                      MemoryAreaIter::new());
     // remap the kernel
     let mut active_table = remap_the_kernel(&mut frame_allocator, boot_info);
 
@@ -152,6 +217,12 @@ impl MemoryController {
     /// new page tables.
     pub fn map_to(&mut self, page: paging::Page, frame: Frame, flags: paging::entry::EntryFlags) {
         self.active_table.map_to(page, frame, flags, &mut self.frame_allocator);
+    }
+
+    /// Maps the page to some free frame with the provided flags.
+    /// The free frame is allocated from the given `FrameAllocator`.
+    pub fn map(&mut self, active_table: &mut ActivePageTable, page: paging::Page, flags: paging::entry::EntryFlags) {
+        active_table.map(page, flags, &mut self.frame_allocator);
     }
 
     /// Flush the TLB table

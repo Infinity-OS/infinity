@@ -1,9 +1,11 @@
 use acpi;
-use vga_buffer;
-use memory;
-use multiboot2;
-use interrupts;
 use device;
+use interrupts;
+use memory;
+use memory::MemoryController;
+use multiboot2;
+use vga_buffer;
+use spin::Mutex;
 
 /// Enable the NXE bit to allow NO_EXECUTE pages.
 fn enable_nxe_bit() {
@@ -25,44 +27,43 @@ fn enable_write_protect_bit() {
 
 extern {
     /// Kernel main function
-    fn kmain() -> !;
+    fn kmain(memory_controller: &mut MemoryController) -> !;
 }
 
+/// Entry point for the Rust code.
 #[no_mangle]
-/// Entry point for the Rust code
 pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
     // Initialize all the arch components in a different scope than the kernel's main function call.
-    {
-        // clear the console screen
-        vga_buffer::clear_screen();
 
-        // print out a welcome message
-        println!("kernel: botting");
+    // clear the console screen
+    vga_buffer::clear_screen();
 
-        let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
+    // print out a welcome message
+    println!("kernel: botting");
 
-        // enable NXE bit, to allow define none executable pages.
-        enable_nxe_bit();
+    let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
 
-        // set write protect bit in order to enable write protection on kernel mode.
-        enable_write_protect_bit();
+    // enable NXE bit, to allow define none executable pages.
+    enable_nxe_bit();
 
-        // set up guard page and map the heap pages
-        let mut memory_controller = memory::init(boot_info);
+    // set write protect bit in order to enable write protection on kernel mode.
+    enable_write_protect_bit();
 
-        // Initialize IDT
-        interrupts::init(&mut memory_controller);
+    // set up guard page and map the heap pages
+    let mut memory_controller = memory::init(boot_info);
 
-        // Initialize devices
-        device::init(&mut memory_controller);
+    // Initialize IDT
+    interrupts::init(&mut memory_controller);
 
-        // Read ACPI tables, starts APs
-        acpi::init(&mut memory_controller);
+    // Initialize devices
+    device::init(&mut memory_controller);
 
-        // Initialize all the non-core devices
-        device::init_non_core();
-    }
+    // Read ACPI tables, starts APs
+    acpi::init(&mut memory_controller);
+
+    // Initialize all the non-core devices
+    device::init_non_core();
 
     // Call the kernel main function
-    unsafe { kmain(); }
+    unsafe { kmain(&mut memory_controller); }
 }

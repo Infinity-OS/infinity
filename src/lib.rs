@@ -15,15 +15,23 @@ extern crate alloc;
 extern crate collections;
 extern crate spin;
 
+use arch::memory::MemoryController;
+use spin::Mutex;
+
 #[macro_use]
 pub mod common;
 
 pub mod context;
 
+static MEMORY_CONTROLLER: Mutex<Option<&'static mut MemoryController>> = Mutex::new(None);
+
 /// This is the kernel entry point for the primary CPU. The arch crate is responsible for calling
 /// this.
 #[no_mangle]
-pub extern fn kmain() -> ! {
+pub extern fn kmain(memory_controller: &'static mut MemoryController) -> ! {
+    // save the memory controller
+    *MEMORY_CONTROLLER.lock() = Some(memory_controller);
+
     // initialize the context sub-system
     context::init();
 
