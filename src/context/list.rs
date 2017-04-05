@@ -19,6 +19,9 @@ impl ContextList {
     }
 
     /// Create a new context.
+    ///
+    /// ## Returns
+    /// A Result with a reference counter for the created Context.
     pub fn new_context(&mut self) -> Result<&Arc<RwLock<Context>>, &str> {
         // TODO check if we are exceeding the max PID number
 
@@ -40,5 +43,16 @@ impl ContextList {
 
         // return the new created context
         Ok(self.map.get(&id).expect("Failed to insert new context. ID is out of bounds."))
+    }
+
+    /// Remove a context from the list.
+    ///
+    /// ## Parameters
+    /// - `id`: Id from the context to be removed.
+    ///
+    /// ## Returns
+    /// An Option with a reference counter for the removed Context.
+    pub fn remove(&mut self, id: ContextId) -> Option<Arc<RwLock<Context>>> {
+        self.map.remove(&id)
     }
 }
