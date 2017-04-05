@@ -27,6 +27,11 @@ pub mod context;
 
 static MEMORY_CONTROLLER: Mutex<Option<&'static mut MemoryController>> = Mutex::new(None);
 
+pub extern fn userspace_init() {
+    println!("Hello from a context!");
+    loop {}
+}
+
 /// This is the kernel entry point for the primary CPU. The arch crate is responsible for calling
 /// this.
 #[no_mangle]
@@ -37,7 +42,20 @@ pub extern fn kmain(memory_controller: &'static mut MemoryController) -> ! {
     // initialize the context sub-system
     context::init();
 
-    println!("It did not crash!");
+    // Spawn a context
+    match context::contexts_mut().spawn(userspace_init) {
+        Ok(context_lock) => {
+            let mut context = context_lock.write();
+            context.status = context::Status::Runnable;
+        },
+        Err(error) => {
+            panic!("failed to spawn userspace_init: {}", error);
+        }
+    }
 
-    loop { }
+    println!("On kernel!");
+
+    loop {
+
+    }
 }

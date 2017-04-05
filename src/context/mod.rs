@@ -29,7 +29,7 @@ fn contexts() -> RwLockReadGuard<'static, ContextList> {
 }
 
 /// Get the global contexts, mutable.
-fn contexts_mut() -> RwLockWriteGuard<'static, ContextList> {
+pub fn contexts_mut() -> RwLockWriteGuard<'static, ContextList> {
     CONTEXTS.call_once(init_contexts).write()
 }
 
