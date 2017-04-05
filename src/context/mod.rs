@@ -12,6 +12,9 @@ mod context;
 /// Context list
 mod list;
 
+/// Memory logic for the Context
+mod memory;
+
 /// Contexts list
 static CONTEXTS: Once<RwLock<ContextList>> = Once::new();
 

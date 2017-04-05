@@ -2,6 +2,12 @@
 
 use ::core::sync::atomic::AtomicUsize;
 use alloc::boxed::Box;
+use alloc::arc::Arc;
+use collections::Vec;
+use spin::Mutex;
+
+use arch::memory::MemoryController;
+use super::memory::{Memory, SharedMemory};
 
 /// Unique identifier for a context
 int_like!(ContextId, AtomicContextId, usize, AtomicUsize);
@@ -29,15 +35,19 @@ pub struct Context {
     pub arch: ::arch::context::Context,
     /// Stores the kernel stack.
     pub kstack: Option<Box<[u8]>>,
-    // TODO User heap.
-    // pub heap:
-    // TODO User stack.
-    // pub stack:
-    // TODO A string identifier for the current context.
-    // pub name: Arc
+    /// User heap.
+    pub heap: Option<SharedMemory>,
+    /// User stack.
+    pub stack: Option<Memory>,
+    /// A string identifier for the current context.
+    pub name: Arc<Mutex<Vec<u8>>>
 }
 
 impl Context {
+    /// Create a new context instance.
+    ///
+    /// ## Parameters
+    /// - `id`: The unique identifier for this context.
     pub fn new(id: ContextId) -> Context {
         Context {
             id: id,
@@ -45,7 +55,10 @@ impl Context {
             status: Status::Blocked,
             running: false,
             arch: ::arch::context::Context::new(),
-            kstack: None
+            kstack: None,
+            heap: None,
+            stack: None,
+            name: Arc::new(Mutex::new(Vec::new()))
         }
     }
 }
