@@ -4,6 +4,7 @@
 #![feature(alloc, collections)]
 #![feature(const_fn)]
 #![feature(drop_types_in_const)]
+#![feature(heap_api)]
 #![no_std]
 
 /// Architecture specific items (x86_64)
@@ -12,6 +13,7 @@
 extern crate arch_x86_64 as arch;
 
 extern crate alloc;
+#[macro_use]
 extern crate collections;
 extern crate spin;
 

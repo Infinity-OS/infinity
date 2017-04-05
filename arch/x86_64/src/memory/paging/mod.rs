@@ -166,6 +166,12 @@ impl ActivePageTable {
 
         unsafe { tlb::flush_all(); }
     }
+
+    /// Get the CR3 address.
+    pub unsafe fn address(&self) -> usize {
+        use x86_64::registers::control_regs;
+        control_regs::cr3().0 as usize
+    }
 }
 
 pub struct InactivePageTable {
