@@ -48,6 +48,8 @@ pub enum Color {
     White = 15,
 }
 
+const DEFAULT_COLOR_CODE: ColorCode = ColorCode::new(Color::Cyan, Color::White);
+
 #[derive(Debug, Clone, Copy)]
 struct ColorCode(u8);
 
@@ -67,13 +69,12 @@ pub struct Writer {
 pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
     row_positon: 0,
     column_position: 0,
-    color_code: ColorCode::new(Color::Cyan, Color::White),
+    color_code: DEFAULT_COLOR_CODE,
     buffer: unsafe { Unique::new(0xb8000 as *mut _) },
 });
 
 /// Implement the Writer Struct
 impl Writer {
-
     /// Write a byte to the console.
     ///
     /// # Arguments
@@ -141,6 +142,10 @@ impl Writer {
         for col in 0..BUFFER_WIDTH {
             self.buffer().chars[row][col].write(blank);
         }
+    }
+    /// Change the color code
+    pub fn set_color_code(&mut self, foreground: Color, background: Color) {
+        self.color_code = ColorCode::new(foreground, background)
     }
 }
 

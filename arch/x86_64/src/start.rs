@@ -41,6 +41,10 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
     // print out a welcome message
     println!("kernel: botting");
 
+    //  //TODO test porposals only, remove later
+    vga_buffer::WRITER.lock().set_color_code(vga_buffer::Color::Blue, vga_buffer::Color::Black);
+
+
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
 
     // enable NXE bit, to allow define none executable pages.
