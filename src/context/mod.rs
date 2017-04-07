@@ -15,6 +15,9 @@ mod list;
 /// Memory logic for the Context
 mod memory;
 
+
+/// Limit on number of contexts
+pub const CONTEXT_MAX_CONTEXT: usize = usize::max_value() - 1;
 /// Contexts list
 static CONTEXTS: Once<RwLock<ContextList>> = Once::new();
 

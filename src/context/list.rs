@@ -25,14 +25,17 @@ impl ContextList {
     /// ## Returns
     /// A Result with a reference counter for the created Context.
     pub fn new_context(&mut self) -> Result<&Arc<RwLock<Context>>, &str> {
-        // TODO check if we are exceeding the max PID number
+        // when the next PID will exceed the mac number, we must set it back to 1
+        if self.next_id >= super::CONTEXT_MAX_CONTEXT {
+            self.next_id = 1;
+        }
 
         // find the next not used ID
         while self.map.contains_key(&ContextId::from(self.next_id)) {
             self.next_id += 1;
         }
 
-        // TODO we can exceed the max number with the operation above
+        // TODO we can exceed the max number with the operation above. Return an EAGAIN Error (Resource temporarily unavailable.  This is a temporary condition and later calls to the same routine may complete normally)
 
         // save the new id
         let id = ContextId::from(self.next_id);
