@@ -5,6 +5,7 @@ use memory;
 use memory::MemoryController;
 use multiboot2;
 use vga_buffer;
+use kernel_messaging;
 use spin::Mutex;
 
 /// Enable the NXE bit to allow NO_EXECUTE pages.
@@ -41,10 +42,6 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
     // print out a welcome message
     println!("kernel: botting");
 
-    //  //TODO test porposals only, remove later
-    vga_buffer::WRITER.lock().set_color_code(vga_buffer::Color::Blue, vga_buffer::Color::Black);
-
-
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
 
     // enable NXE bit, to allow define none executable pages.
@@ -67,6 +64,16 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
 
     // Initialize all the non-core devices
     device::init_non_core();
+
+    //  //TODO test porposals only, remove later
+    vga_buffer::WRITER.lock().set_colors(vga_buffer::Color::Blue, vga_buffer::Color::Black);
+    println!("Set color test");
+    kernel_messaging::kprint(kernel_messaging::MessageType::DEFAULT,"Default message!");
+    kernel_messaging::kprint(kernel_messaging::MessageType::SUCCESS,"Success message!");
+    kernel_messaging::kprint(kernel_messaging::MessageType::ERROR,"Error message!");
+    kernel_messaging::kprint(kernel_messaging::MessageType::WARNING,"Warning message!");
+    kernel_messaging::kprint(kernel_messaging::MessageType::INFO,"Info message!");
+    println!("Back to default");
 
     // Call the kernel main function
     unsafe { kmain(&mut memory_controller); }

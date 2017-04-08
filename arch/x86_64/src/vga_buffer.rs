@@ -51,10 +51,10 @@ pub enum Color {
 const DEFAULT_COLOR_CODE: ColorCode = ColorCode::new(Color::Cyan, Color::White);
 
 #[derive(Debug, Clone, Copy)]
-struct ColorCode(u8);
+pub struct ColorCode(u8);
 
 impl ColorCode {
-    const fn new(foreground: Color, background: Color) -> ColorCode {
+    pub const fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
 }
@@ -143,9 +143,14 @@ impl Writer {
             self.buffer().chars[row][col].write(blank);
         }
     }
-    /// Change the color code
-    pub fn set_color_code(&mut self, foreground: Color, background: Color) {
+    /// Change the colors
+    pub fn set_colors(&mut self, foreground: Color, background: Color) {
         self.color_code = ColorCode::new(foreground, background)
+    }
+
+    /// Change the color code
+    pub fn set_color_code(&mut self, color_code: ColorCode) {
+        self.color_code = color_code;
     }
 }
 
