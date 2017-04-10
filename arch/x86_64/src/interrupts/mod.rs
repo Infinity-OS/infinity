@@ -102,3 +102,40 @@ pub fn init(memory_controller: &mut MemoryController) {
     // load the IDT table into the CPU
     IDT.load();
 }
+
+/// Clear interrupts.
+#[inline(always)]
+pub unsafe fn disable() {
+    asm!("cli" : : : : "intel", "volatile");
+}
+
+/// Set interrupts.
+#[inline(always)]
+pub unsafe fn enable() {
+    asm!("sti" : : : : "intel", "volatile");
+}
+
+/// Set interrupt and halt.
+///
+/// This will wait for the next interrupt.
+#[inline(always)]
+pub unsafe fn enable_and_halt() {
+    asm!("sti
+        hlt" : : : : "intel", "volatile");
+}
+
+/// Set interrupts and nop.
+///
+/// This will enable interrupts and allow the IF flag to be processed.
+/// Simply enabling interrupts does not guarantee that they will trigger, use this instead!
+#[inline(always)]
+pub unsafe fn enable_and_nop() {
+    asm!("sti
+        nop" : : : : "intel" "volatile");
+}
+
+/// Pause instruction
+#[inline(always)]
+pub fn pause() {
+    unsafe { asm!("pause" : : : : "intel", "volatile"); }
+}
