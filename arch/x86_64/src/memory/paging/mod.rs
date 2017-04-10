@@ -15,6 +15,11 @@ mod temporary_page;
 
 const ENTRY_COUNT: usize = 512;
 
+// TODO move this to a separated module
+const KERNEL_PERCPU_OFFSET: usize = 0xc000_0000;
+/// Size of kernel percpu variables
+const KERNEL_PERCPU_SIZE: usize = 64 * 1024; // 64kb
+
 pub type PhysicalAddress = usize;
 pub type VirtualAddress = usize;
 
@@ -200,10 +205,38 @@ impl InactivePageTable {
 }
 
 /// Remap the kernel
-pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
+pub unsafe fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
     where A: FrameAllocator
 {
     use core::ops::Range;
+
+    // get the external data segments
+    extern {
+        /// The starting byte of the text (code) data segment.
+        static mut __text_start: u8;
+        /// The ending byte of the text (code) data segment.
+        static mut __text_end: u8;
+        /// The starting byte of the _.rodata_ (read-only data) segment.
+        static mut __rodata_start: u8;
+        /// The ending byte of the _.rodata_ (read-only data) segment.
+        static mut __rodata_end: u8;
+        /// The starting byte of the _.data_ segment.
+        static mut __data_start: u8;
+        /// The ending byte of the _.data_ segment.
+        static mut __data_end: u8;
+        /// The starting byte of the thread data segment
+        static mut __tdata_start: u8;
+        /// The ending byte of the thread data segment
+        static mut __tdata_end: u8;
+        /// The starting byte of the thread BSS segment
+        static mut __tbss_start: u8;
+        /// The ending byte of the thread BSS segment
+        static mut __tbss_end: u8;
+        /// The starting byte of the _.bss_ (uninitialized data) segment.
+        static mut __bss_start: u8;
+        /// The ending byte of the _.bss_ (uninitialized data) segment.
+        static mut __bss_end: u8;
+    }
 
     let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe }, allocator);
 
@@ -213,31 +246,52 @@ pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> Ac
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
     };
 
+    // TODO remap the kernel sections individual, set permissions and deal with the tbss section properly
+
     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
-        let elf_sections_tag = boot_info.elf_sections_tag()
-            .expect("Memory map tag required");
+        // Map tdata and tbss
+        {
+            // get the thread segment size.
+            let size = & __tbss_end as *const _ as usize - & __tdata_start as *const _ as usize;
 
-        // identity map the allocated kernel sections
-        for section in elf_sections_tag.sections() {
-            if !section.is_allocated() {
-                // section is not loaded to memory
-                continue;
+            // TODO add support to multiple CPUs (replace the numeric constant)
+            let start = KERNEL_PERCPU_OFFSET + KERNEL_PERCPU_SIZE * 1;
+            let end = start + size;
+
+            let start_page = Page::containing_address(start as VirtualAddress);
+            let end_page = Page::containing_address((end - 1) as VirtualAddress);
+            for page in Page::range_inclusive(start_page, end_page) {
+                mapper.map(page, PRESENT | GLOBAL | NO_EXECUTE | WRITABLE, allocator);
             }
+        }
 
-            assert!(section.addr as usize % PAGE_SIZE == 0,
-            "sections need to be page aligned");
-            println!("mapping section at addr: {:#x}, size: {:#x}",
-                     section.addr,
-                     section.size);
+        // Function to remap the kernel sections individually. We can no longer use the multiboot
+        // sections because of the thread base sections.
+        let mut remap = move |start: usize, end: usize, flags: EntryFlags, mapper: &mut Mapper, allocator: &mut A| {
+            assert!(start as usize % PAGE_SIZE == 0, "sections need to be page aligned");
 
-            let flags = EntryFlags::from_elf_section_flags(section);
-
-            let start_frame = Frame::containing_address(section.start_address());
-            let end_frame = Frame::containing_address(section.end_address() - 1);
+            let start_frame = Frame::containing_address(start);
+            let end_frame = Frame::containing_address(end - 1);
             for frame in Frame::range_inclusive(start_frame, end_frame) {
                 mapper.identity_map(frame, flags, allocator);
             }
-        }
+        };
+
+        // Remap the kernel with `flags`
+        let mut remap_section = move |start: &u8, end: &u8, flags: EntryFlags, mapper: &mut Mapper, allocator: &mut A| {
+            remap(start as *const _ as usize, end as *const _ as usize, flags, mapper, allocator);
+        };
+
+        // Remap text read-only
+        remap_section(& __text_start, & __text_end, PRESENT | GLOBAL, mapper, allocator);
+        // Remap rodata read-only, no execute
+        remap_section(& __rodata_start, & __rodata_end, PRESENT | GLOBAL | NO_EXECUTE, mapper, allocator);
+        // Remap data writable, no execute
+        remap_section(& __data_start, & __data_end, PRESENT | GLOBAL | NO_EXECUTE | WRITABLE, mapper, allocator);
+        // Remap tdata master writable, no execute
+        remap_section(& __tdata_start, & __tdata_end, PRESENT | GLOBAL | NO_EXECUTE, mapper, allocator);
+        // Remap bss writable, no execute
+        remap_section(& __bss_start, & __bss_end, PRESENT | GLOBAL | NO_EXECUTE | WRITABLE, mapper, allocator);
 
         // identity map the VGA text buffer
         let vga_buffer_frame = Frame::containing_address(0xb8000);

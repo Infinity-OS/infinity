@@ -106,7 +106,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
                                                       boot_info.end_address(),
                                                       MemoryAreaIter::new());
     // remap the kernel
-    let mut active_table = remap_the_kernel(&mut frame_allocator, boot_info);
+    let mut active_table = unsafe { remap_the_kernel(&mut frame_allocator, boot_info) };
 
     // remap heap
     use self::paging::Page;
