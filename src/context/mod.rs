@@ -2,9 +2,11 @@
 
 use alloc::boxed::Box;
 use spin::{Once, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use core::sync::atomic::Ordering;
 
 pub use self::context::{Context, Status, ContextId};
 pub use self::list::ContextList;
+pub use self::switch::switch;
 
 /// Context structure
 mod context;
@@ -15,9 +17,16 @@ mod list;
 /// Memory logic for the Context
 mod memory;
 
+/// Scheduler function.
+mod switch;
 
 /// Limit on number of contexts
 pub const CONTEXT_MAX_CONTEXT: usize = usize::max_value() - 1;
+
+/// Current context in this thread
+#[thread_local]
+static CONTEXT_ID: context::AtomicContextId = context::AtomicContextId::default();
+
 /// Contexts list
 static CONTEXTS: Once<RwLock<ContextList>> = Once::new();
 
@@ -47,7 +56,17 @@ pub fn init() {
     // create the context, mutable
     let mut context = context_lock.write();
 
-    // TODO Alloc some heap space for the initial context.
+    // alloc space to save the FX registers
+    let mut fx = unsafe { Box::from_raw(::alloc::heap::allocate(512, 16) as *mut [u8; 512]) };
+    for b in fx.iter_mut() {
+        *b = 0;
+    }
 
+    // set the other required context properties
+    context.arch.set_fx(fx.as_ptr() as usize);
     context.status = Status::Runnable;
+    context.running = true;
+
+    // store the current context id
+    CONTEXT_ID.store(context.id, Ordering::SeqCst);
 }

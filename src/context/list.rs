@@ -2,6 +2,7 @@ use alloc::arc::Arc;
 use alloc::boxed::Box;
 use collections::BTreeMap;
 use core::mem;
+use core::sync::atomic::Ordering;
 use spin::RwLock;
 
 use super::context::{Context, ContextId};
@@ -18,6 +19,16 @@ impl ContextList {
             map: BTreeMap::new(),
             next_id: 1
         }
+    }
+
+    /// Get the current context.
+    pub fn current(&self) -> Option<&Arc<RwLock<Context>>> {
+        self.map.get(&super::CONTEXT_ID.load(Ordering::SeqCst))
+    }
+
+    /// Get a iterator for the list of contexts.
+    pub fn iter(&self) -> ::collections::btree_map::Iter<ContextId, Arc<RwLock<Context>>> {
+        self.map.iter()
     }
 
     /// Create a new context.

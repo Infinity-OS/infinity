@@ -5,6 +5,7 @@
 #![feature(const_fn)]
 #![feature(drop_types_in_const)]
 #![feature(heap_api)]
+#![feature(thread_local)]
 #![no_std]
 
 /// Architecture specific items (x86_64)
@@ -18,6 +19,7 @@ extern crate collections;
 extern crate spin;
 
 use arch::memory::MemoryController;
+use arch::interrupts;
 use spin::Mutex;
 
 #[macro_use]
@@ -53,9 +55,18 @@ pub extern fn kmain(memory_controller: &'static mut MemoryController) -> ! {
         }
     }
 
-    println!("On kernel!");
-
     loop {
+        unsafe {
+            // disable interrupts in order to perform the switch without interruptions.
+            interrupts::disable();
 
+            // swicth to the next context.
+            if context::switch() {
+                interrupts::enable_and_nop();
+            } else {
+                // enable interrupt, then halt CPU (to save power) until the next interrupt is fired.
+                interrupts::enable_and_halt();
+            }
+        }
     }
 }
