@@ -48,7 +48,7 @@ pub enum Color {
     White = 15,
 }
 
-const DEFAULT_COLOR_CODE: ColorCode = ColorCode::new(Color::Cyan, Color::White);
+pub const DEFAULT_COLOR_CODE: ColorCode = ColorCode::new(Color::Cyan, Color::White);
 
 #[derive(Debug, Clone, Copy)]
 pub struct ColorCode(u8);
