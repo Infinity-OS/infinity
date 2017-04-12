@@ -5,6 +5,7 @@
   "target-pointer-width": "64",
   "arch": "x86_64",
   "os": "none",
+  "linker-flavor": "gcc",
   "features": "-mmx,-sse,+soft-float",
   "disable-redzone": true
 }
