@@ -1,3 +1,5 @@
+use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
+
 use acpi;
 use device;
 use interrupts;
@@ -7,6 +9,14 @@ use multiboot2;
 use vga_buffer;
 use kernel_messaging;
 use spin::Mutex;
+
+/// This is used to count the number of CPUs on the system
+pub static CPU_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
+
+///  Get the number of CPUs currently active
+pub fn cpu_count() -> usize {
+    CPU_COUNT.load(Ordering::Relaxed)
+}
 
 /// Enable the NXE bit to allow NO_EXECUTE pages.
 fn enable_nxe_bit() {
@@ -64,6 +74,9 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
 
     // Initialize all the non-core devices
     device::init_non_core();
+
+    // reset CPU count
+    CPU_COUNT.store(1, Ordering::SeqCst);
 
     //  //TODO test porposals only, remove later
     vga_buffer::WRITER.lock().set_colors(vga_buffer::Color::Blue, vga_buffer::Color::Black);
