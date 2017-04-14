@@ -61,10 +61,10 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
     enable_write_protect_bit();
 
     // set up guard page and map the heap pages
-    let mut memory_controller = memory::init(boot_info);
+    let (mut memory_controller, tcb_offset) = memory::init(0, boot_info);
 
-    // Initialize IDT
-    interrupts::init(&mut memory_controller);
+    // Initialize IDT and GDT
+    interrupts::init(&mut memory_controller, tcb_offset);
 
     // Initialize devices
     device::init(&mut memory_controller);
@@ -78,7 +78,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
     // reset CPU count
     CPU_COUNT.store(1, Ordering::SeqCst);
 
-    //  //TODO test porposals only, remove later
+    // TODO for test purposes only, remove later
     vga_buffer::WRITER.lock().set_colors(vga_buffer::Color::Blue, vga_buffer::Color::Black);
     println!("Set color test");
     kernel_messaging::kprint(kernel_messaging::MessageType::DEFAULT,"Default message!");

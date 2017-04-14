@@ -240,7 +240,7 @@ unsafe fn init_tcb(cpu_id: usize) -> usize {
 }
 
 /// Remap the kernel
-pub unsafe fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
+pub unsafe fn remap_the_kernel<A>(cpu_id: usize, allocator: &mut A, boot_info: &BootInformation) -> (ActivePageTable, usize)
     where A: FrameAllocator
 {
     use core::ops::Range;
@@ -281,8 +281,6 @@ pub unsafe fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
     };
 
-    // TODO remap the kernel sections individual, set permissions and deal with the tbss section properly
-
     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
         // Map tdata and tbss
         {
@@ -290,7 +288,7 @@ pub unsafe fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation
             let size = & __tbss_end as *const _ as usize - & __tdata_start as *const _ as usize;
 
             // TODO add support to multiple CPUs (replace the numeric constant)
-            let start = KERNEL_PERCPU_OFFSET + KERNEL_PERCPU_SIZE * 1;
+            let start = KERNEL_PERCPU_OFFSET + KERNEL_PERCPU_SIZE * cpu_id;
             let end = start + size;
 
             let start_page = Page::containing_address(start as VirtualAddress);
@@ -348,9 +346,6 @@ pub unsafe fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation
     active_table.unmap(old_p4_page, allocator);
     println!("guard page at {:#x}", old_p4_page.start_address());
 
-    // initialize tcb
-    // TODO make the CPU id dynamic
-    init_tcb(1);
-
-    active_table
+    // initialize tcb and return the tcb address and the active page table reference
+    (active_table, init_tcb(cpu_id))
 }

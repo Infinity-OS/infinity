@@ -63,10 +63,12 @@ lazy_static! {
 static TSS: Once<TaskStateSegment> = Once::new();
 static GDT: Once<gdt::Gdt> = Once::new();
 
+// TODO this must be adapted to add support to multi thread systems
 /// Initialize the IDT
-pub fn init(memory_controller: &mut MemoryController) {
-    use x86_64::instructions::segmentation::set_cs;
+pub fn init(memory_controller: &mut MemoryController, tcb_offset: usize) {
+    use x86_64::instructions::segmentation;
     use x86_64::instructions::tables::load_tss;
+    use x86_64::PrivilegeLevel;
     use x86_64::VirtualAddress;
     use x86_64::structures::gdt::SegmentSelector;
 
@@ -82,18 +84,33 @@ pub fn init(memory_controller: &mut MemoryController) {
 
     // configure GDT
     let mut code_selector = SegmentSelector(0);
+    let mut data_selector = SegmentSelector(0);
+    let mut tls_selector = SegmentSelector(0);
     let mut tss_selector = SegmentSelector(0);
     let gdt = GDT.call_once(|| {
         let mut gdt = gdt::Gdt::new();
+        // setup the kernel code segment
         code_selector = gdt.add_entry(gdt::Descriptor::kernel_code_segment());
+
+        // setup the kernel data segment
+        data_selector = gdt.add_entry(gdt::Descriptor::kernel_data_segment());
+
+        // setup the thread local segment
+        tls_selector = gdt.add_entry(gdt::Descriptor::thread_local_segment(tcb_offset));
+
+        // setup the TSS segment
         tss_selector = gdt.add_entry(gdt::Descriptor::tss_segment(&tss));
         gdt
     });
     gdt.load();
 
     unsafe {
-        // reload code segment register
-        set_cs(code_selector);
+        // reload segment registers
+        segmentation::set_cs(code_selector);
+        segmentation::load_ds(data_selector);
+        segmentation::load_es(SegmentSelector::new(2, PrivilegeLevel::Ring0));
+        segmentation::load_fs(tls_selector);
+        segmentation::load_gs(SegmentSelector::new(2, PrivilegeLevel::Ring0));
 
         // load TSS
         load_tss(tss_selector);

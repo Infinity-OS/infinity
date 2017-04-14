@@ -68,7 +68,7 @@ static mut MEMORY_MAP: [MemoryArea; 512] = [MemoryArea { base_addr: 0, length: 0
 /// ## Returns
 ///
 /// The memory controller that servers a simple interface to manage the memory allocation.
-pub fn init(boot_info: &BootInformation) -> MemoryController {
+pub fn init(cpu_id: usize, boot_info: &BootInformation) -> (MemoryController, usize) {
     // insure that this function is only called once
     assert_has_not_been_called!("memory::init must be called only once");
 
@@ -106,7 +106,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
                                                       boot_info.end_address(),
                                                       MemoryAreaIter::new());
     // remap the kernel
-    let mut active_table = unsafe { remap_the_kernel(&mut frame_allocator, boot_info) };
+    let (mut active_table, tcb_offset) = unsafe { remap_the_kernel(cpu_id, &mut frame_allocator, boot_info) };
 
     // remap heap
     use self::paging::Page;
@@ -132,11 +132,15 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         stack_allocator::StackAllocator::new(stack_alloc_range)
     };
 
-    MemoryController {
+    // create the memory controller instance
+    let memory_controller = MemoryController {
         active_table: active_table,
         frame_allocator: frame_allocator,
         stack_allocator: stack_allocator
-    }
+    };
+
+    // returns the memory controller and the tcb offset
+    (memory_controller, tcb_offset)
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

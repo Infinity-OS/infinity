@@ -1,4 +1,7 @@
 //! # Global Descriptor Table (GDT) manager module
+//!
+//! ## References
+//! - [OSDev GDT](http://wiki.osdev.org/Global_Descriptor_Table)
 
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::gdt::SegmentSelector;
@@ -67,6 +70,29 @@ impl Descriptor {
     pub fn kernel_code_segment() -> Descriptor {
         let flags = USER_SEGMENT | PRESENT | EXECUTABLE | LONG_MODE;
         Descriptor::UserSegment(flags.bits())
+    }
+
+    pub fn kernel_data_segment() -> Descriptor {
+        let flags = USER_SEGMENT | PRESENT | LONG_MODE;
+        Descriptor::UserSegment(flags.bits())
+    }
+
+    /// Creates a segment for the TLS
+    pub fn thread_local_segment(offset: usize) -> Descriptor {
+        use bit_field::BitField;
+
+        // set the descriptor flags
+        let flags = USER_SEGMENT | PRESENT | LONG_MODE;
+
+        // get the bytes
+        let mut bits = flags.bits();
+
+        // set the offset
+        let off = offset as u64;
+        bits.set_bits(16..40, off.get_bits(0..24));
+        bits.set_bits(56..64, off.get_bits(24..32));
+
+        Descriptor::UserSegment(bits)
     }
 
     /// Create a new TSS segment

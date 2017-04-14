@@ -20,6 +20,7 @@ extern crate spin;
 
 use arch::memory::MemoryController;
 use arch::interrupts;
+use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
 use spin::Mutex;
 
 #[macro_use]
@@ -27,7 +28,16 @@ pub mod common;
 
 pub mod context;
 
+/// Architecture memory controller.
 static MEMORY_CONTROLLER: Mutex<Option<&'static mut MemoryController>> = Mutex::new(None);
+
+/// A unique number that identifies the current CPU - used for scheduling.
+static CPU_ID: AtomicUsize = ATOMIC_USIZE_INIT;
+
+/// Get the current CPU's scheduling ID.
+pub fn cpu_id() -> usize {
+    CPU_ID.load(Ordering::Relaxed)
+}
 
 pub extern fn userspace_init() {
     println!("Hello from a context!");
@@ -40,6 +50,9 @@ pub extern fn userspace_init() {
 pub extern fn kmain(memory_controller: &'static mut MemoryController) -> ! {
     // save the memory controller
     *MEMORY_CONTROLLER.lock() = Some(memory_controller);
+
+    // set the current CPU id
+    CPU_ID.store(0, Ordering::SeqCst);
 
     // initialize the context sub-system
     context::init();
