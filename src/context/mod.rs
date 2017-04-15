@@ -67,6 +67,7 @@ pub fn init() {
     context.status = Status::Runnable;
     context.running = true;
     context.kfx = Some(fx);
+    context.cpu_id = Some(::cpu_id());
 
     // store the current context id
     CONTEXT_ID.store(context.id, Ordering::SeqCst);
