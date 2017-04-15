@@ -53,7 +53,7 @@ pub fn init() {
     // create a new context
     let context_lock = contexts.new_context().expect("Could not initialize first context");
 
-    // create the context, mutable
+    // Lock the context, mutable
     let mut context = context_lock.write();
 
     // alloc space to save the FX registers
@@ -66,6 +66,7 @@ pub fn init() {
     context.arch.set_fx(fx.as_ptr() as usize);
     context.status = Status::Runnable;
     context.running = true;
+    context.kfx = Some(fx);
 
     // store the current context id
     CONTEXT_ID.store(context.id, Ordering::SeqCst);

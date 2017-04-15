@@ -14,7 +14,6 @@ extern crate linked_list_allocator;
 pub const HEAP_START: usize = 0o_000_001_000_000_0000;
 pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
 
-
 #[macro_use]
 extern crate lazy_static;
 

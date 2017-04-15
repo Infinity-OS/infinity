@@ -31,8 +31,12 @@ pub struct Context {
     pub status: Status,
     /// Is just a fast way to check if the context is currently running.
     pub running: bool,
+    /// CPU ID, if locked
+    pub cpu_id: Option<usize>,
     /// The architecture specific context.
     pub arch: ::arch::context::Context,
+    /// Used to hold the Box to store the FX registers
+    pub kfx: Option<Box<[u8]>>,
     /// Stores the kernel stack.
     pub kstack: Option<Box<[u8]>>,
     /// User heap.

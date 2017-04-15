@@ -93,6 +93,7 @@ impl ContextList {
             context.arch.set_fx(fx.as_ptr() as usize);
             context.arch.set_stack(stack.as_ptr() as usize + offset);
             context.kstack = Some(stack);
+            context.kfx = Some(fx);
         }
 
         Ok(context_lock)
