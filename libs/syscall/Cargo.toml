@@ -1,0 +1,9 @@
+[package]
+name = "infinity_syscall"
+version = "0.1.0"
+description = "A Rust library to acess raw Infinity system calls"
+license = "MIT"
+authors = ["Gil Mendes <gil00mendes@gmail.com>"]
+
+[lib]
+name = "syscall"

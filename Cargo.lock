@@ -5,6 +5,7 @@ dependencies = [
  "arch_x86_64 0.1.0",
  "bit_field 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "infinity_syscall 0.1.0",
  "spin 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -48,6 +49,10 @@ dependencies = [
  "linked_list_allocator 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "spin 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "infinity_syscall"
+version = "0.1.0"
 
 [[package]]
 name = "lazy_static"
