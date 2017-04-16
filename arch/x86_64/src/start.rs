@@ -78,16 +78,6 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) -> ! {
     // reset CPU count
     CPU_COUNT.store(1, Ordering::SeqCst);
 
-    // TODO for test purposes only, remove later
-    vga_buffer::WRITER.lock().set_colors(vga_buffer::Color::Blue, vga_buffer::Color::Black);
-    println!("Set color test");
-    kernel_messaging::kprint(kernel_messaging::MessageType::DEFAULT,"Default message!");
-    kernel_messaging::kprint(kernel_messaging::MessageType::SUCCESS,"Success message!");
-    kernel_messaging::kprint(kernel_messaging::MessageType::ERROR,"Error message!");
-    kernel_messaging::kprint(kernel_messaging::MessageType::WARNING,"Warning message!");
-    kernel_messaging::kprint(kernel_messaging::MessageType::INFO,"Info message!");
-    println!("Back to default");
-
     // Call the kernel main function
     unsafe { kmain(&mut memory_controller); }
 }

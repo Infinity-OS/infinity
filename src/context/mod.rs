@@ -5,11 +5,15 @@ use spin::{Once, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use core::sync::atomic::Ordering;
 
 pub use self::context::{Context, Status, ContextId};
+pub use self::file::File;
 pub use self::list::ContextList;
 pub use self::switch::switch;
 
 /// Context structure
 mod context;
+
+/// Context file
+mod file;
 
 /// Context list
 mod list;
@@ -22,6 +26,9 @@ mod switch;
 
 /// Limit on number of contexts
 pub const CONTEXT_MAX_CONTEXT: usize = usize::max_value() - 1;
+
+/// Maximum context files
+pub const CONTEXT_MAX_FILES: usize = 65536;
 
 /// Current context in this thread
 #[thread_local]
@@ -36,7 +43,7 @@ fn init_contexts() -> RwLock<ContextList> {
 }
 
 /// Get the global contexts.
-fn contexts() -> RwLockReadGuard<'static, ContextList> {
+pub fn contexts() -> RwLockReadGuard<'static, ContextList> {
     CONTEXTS.call_once(init_contexts).read()
 }
 

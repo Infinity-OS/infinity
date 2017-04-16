@@ -4,6 +4,8 @@ use ::core::sync::atomic::AtomicUsize;
 use alloc::boxed::Box;
 use alloc::arc::Arc;
 use collections::Vec;
+use super::File;
+use scheme::{SchemeNamespace, FileHandle};
 use spin::Mutex;
 
 use arch::memory::MemoryController;
@@ -27,6 +29,18 @@ pub struct Context {
     pub id: ContextId,
     /// This is the ID from the owner process that spawn this object.
     pub parentId: ContextId,
+    /// The real user id
+    pub ruid: u32,
+    /// The real group id
+    pub rgid: u32,
+    /// The real namespace id
+    pub rns: SchemeNamespace,
+    /// The effective user id
+    pub euid: u32,
+    /// The effective group id
+    pub egid: u32,
+    /// The effective namespace id
+    pub ens: SchemeNamespace,
     /// This status is used to store the current structure state.
     pub status: Status,
     /// Is just a fast way to check if the context is currently running.
@@ -44,7 +58,9 @@ pub struct Context {
     /// User stack.
     pub stack: Option<Memory>,
     /// A string identifier for the current context.
-    pub name: Arc<Mutex<Vec<u8>>>
+    pub name: Arc<Mutex<Vec<u8>>>,
+    /// The open files in the scheme
+    pub files: Arc<Mutex<Vec<Option<File>>>>
 }
 
 impl Context {
@@ -56,6 +72,12 @@ impl Context {
         Context {
             id: id,
             parentId: ContextId::from(0),
+            ruid: 0,
+            rgid: 0,
+            rns: SchemeNamespace::from(0),
+            euid: 0,
+            egid: 0,
+            ens: SchemeNamespace::from(0),
             status: Status::Blocked,
             running: false,
             cpu_id: None,
@@ -64,7 +86,48 @@ impl Context {
             kstack: None,
             heap: None,
             stack: None,
-            name: Arc::new(Mutex::new(Vec::new()))
+            name: Arc::new(Mutex::new(Vec::new())),
+            files: Arc::new(Mutex::new(Vec::new()))
+        }
+    }
+
+    /// Add a file to the lowest available slot.
+    ///
+    /// ## Returns
+    /// The file descriptor number or None if no slot was found.
+    pub fn add_file(&self, file: File) -> Option<FileHandle> {
+        // Get the lock for the list of files.
+        let mut files = self.files.lock();
+
+        for (i, mut file_option) in files.iter_mut().enumerate() {
+            if file_option.is_none() {
+                *file_option = Some(file);
+                return Some(FileHandle::from(i))
+            }
+        }
+
+        let len = files.len();
+        if len < super::CONTEXT_MAX_FILES {
+            files.push(Some(file));
+            Some(FileHandle::from(len))
+        } else {
+            None
+        }
+    }
+
+    /// Get a file.
+    ///
+    /// ## Parameters
+    /// - `fd`: File descriptor of the file to get.
+    ///
+    /// ## Returns
+    /// The file structure if found. Otherwise a `None`.
+    pub fn get_file(&self, fd: FileHandle) -> Option<File> {
+        let files = self.files.lock();
+        if fd.into() < files.len() {
+            files[fd.into()]
+        } else {
+            None
         }
     }
 }

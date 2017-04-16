@@ -28,6 +28,12 @@ pub mod common;
 
 pub mod context;
 
+/// Scheme module
+pub mod scheme;
+
+/// System calls module
+pub mod syscall;
+
 /// Architecture memory controller.
 static MEMORY_CONTROLLER: Mutex<Option<&'static mut MemoryController>> = Mutex::new(None);
 
@@ -40,6 +46,9 @@ pub fn cpu_id() -> usize {
 }
 
 pub extern fn userspace_init() {
+    // change dir for the init FS
+    assert_eq!(syscall::chdir(b"initfs:"), Ok(0));
+
     println!("Hello from a context!");
     loop {}
 }
