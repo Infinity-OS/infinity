@@ -4,6 +4,7 @@ use context;
 use syscall;
 use syscall::data::{Stat, Packet};
 use syscall::error::*;
+use syscall::flag::*;
 use scheme::{self, FileHandle};
 
 pub fn file_open(a: usize, fd: FileHandle, c: usize, d: usize) -> Result<usize> {
@@ -62,9 +63,18 @@ pub fn chdir(path: &[u8]) -> Result<usize> {
     // check the file state
     let mut stat = Stat::default();
     let stat_res = file_open_mut_slice(syscall::number::SYS_FSTAT, fd, &mut stat);
+
     // TODO close the file descriptor
 
-    Err(Error::new(ENOTDIR))
+    // handle the response status
+    stat_res?;
+
+    if stat.st_mode & (MODE_FILE | MODE_DIR) == MODE_DIR {
+        // TODO change the cwd of the context
+        Ok(0)
+    } else {
+        Err(Error::new(ENOTDIR))
+    }
 }
 
 /// Open system call.

@@ -7,6 +7,9 @@
 LDFLAGS = $(NO_AS_NEEDED)
 LD = $(prefix)ld
 
+# Include the default configuration file
+include mk/config.mk
+
 # Include the configuration file
 -include config.mak
 

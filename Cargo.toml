@@ -2,6 +2,7 @@
 authors = ["Gil Mendes <gil00mendes@gmail.com>", "Ivo Ribeiro <ivolopesribeiro15@gmail.com>"]
 name = "infinity_os"
 version = "0.1.0"
+build = "build.rs"
 
 [dependencies]
 bit_field = "0.7.0"

@@ -65,6 +65,10 @@ pub const ENOENT: i32 = 2;
 pub const ESRCH: i32 = 3;
 /// Bad file number
 pub const EBADF: i32 = 9;
+/// Bad address
+pub const EFAULT: i32 = 14;
+/// File exists
+pub const EEXIST: i32 = 17;
 /// No such device
 pub const ENODEV: i32 = 19;
 /// Not a directory
@@ -90,10 +94,10 @@ pub static STR_STATE: [&'static str; 39] = [
     "",
     "",
     "",
+    "Bad address",
     "",
     "",
-    "",
-    "",
+    "File exists",
     "",
     "No such device",
     "Not a directory",
