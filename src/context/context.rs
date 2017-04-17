@@ -59,6 +59,8 @@ pub struct Context {
     pub stack: Option<Memory>,
     /// A string identifier for the current context.
     pub name: Arc<Mutex<Vec<u8>>>,
+    /// The current working directory
+    pub cwd: Arc<Mutex<Vec<u8>>>,
     /// The open files in the scheme
     pub files: Arc<Mutex<Vec<Option<File>>>>
 }
@@ -87,7 +89,75 @@ impl Context {
             heap: None,
             stack: None,
             name: Arc::new(Mutex::new(Vec::new())),
+            cwd: Arc::new(Mutex::new(Vec::new())),
             files: Arc::new(Mutex::new(Vec::new()))
+        }
+    }
+
+    /// Make a relative path absolute.
+    pub fn canonicalize(&self, path: &[u8]) -> Vec<u8> {
+        let mut canon = if path.iter().position(|&b| b == b':').is_none() {
+            // get the current path
+            let cwd = self.cwd.lock();
+
+            let mut canon = if !path.starts_with(b"") {
+                let mut c = cwd.clone();
+                if !c.ends_with(b"/") {
+                    c.push(b'/');
+                }
+                c
+            } else {
+                cwd[..cwd.iter().position(|&b| b == b':').map_or(1, |i| i + 1)].to_vec()
+            };
+
+            canon.extend_from_slice(&path);
+            canon
+        } else {
+            path.to_vec()
+        };
+
+        // NOTE: assumes the scheme does not include anything like "../" or "./"
+        let mut result = {
+            let parts = canon.split(|&c| c == b'/')
+                .filter(|&part| part != b".")
+                .rev()
+                .scan(0, |nskip, part| {
+                    if part == b"." {
+                        Some(None)
+                    } else if part == b".." {
+                        *nskip += 1;
+                        Some(None)
+                    } else {
+                        if *nskip > 0 {
+                            *nskip -= 1;
+                            Some(None)
+                        } else {
+                            Some(Some(part))
+                        }
+                    }
+                })
+                .filter_map(|x| x)
+                .collect::<Vec<_>>();
+            parts
+                .iter()
+                .rev()
+                .fold(Vec::new(), |mut vec, &part| {
+                    vec.extend_from_slice(part);
+                    vec.push(b'/');
+                    vec
+                })
+        };
+        result.pop(); // remove extra '/'
+
+        // replace with the root of the scheme if it's empty
+        if result.len() == 0 {
+            let pos = canon.iter()
+                .position(|&b| b == b':')
+                .map_or(canon.len(), |p| p + 1);
+            canon.truncate(pos);
+            canon
+        } else {
+            result
         }
     }
 

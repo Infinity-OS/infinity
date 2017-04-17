@@ -64,13 +64,20 @@ pub fn chdir(path: &[u8]) -> Result<usize> {
     let mut stat = Stat::default();
     let stat_res = file_open_mut_slice(syscall::number::SYS_FSTAT, fd, &mut stat);
 
-    // TODO close the file descriptor
+    // TODO close the file descriptor (implement syscall close)
+    // let _ = close(fd);
 
     // handle the response status
     stat_res?;
 
     if stat.st_mode & (MODE_FILE | MODE_DIR) == MODE_DIR {
-        // TODO change the cwd of the context
+        let contexts = context::contexts();
+        let context_lock = contexts.current().ok_or(Error::new(ESRCH))?;
+        let context = context_lock.read();
+
+        // get the canonical path and replace cwd with it
+        let canonical = context.canonicalize(path);
+        *context.cwd.lock() = canonical;
         Ok(0)
     } else {
         Err(Error::new(ENOTDIR))
@@ -83,17 +90,16 @@ pub fn chdir(path: &[u8]) -> Result<usize> {
 /// - `path`: file that must be opened.
 /// - `flags`: define how the file must be opened.
 pub fn open(path: &[u8], flags: usize) -> Result<FileHandle> {
-    // TODO canonicalize the path (make a relative path absolute)
-    let (uid, gid, scheme_ns) = {
+    let (path_canonical, uid, gid, scheme_ns) = {
         // get the correspondent process
         let contexts = context::contexts();
         let context_lock = contexts.current().ok_or(Error::new(ESRCH))?;
         let context = context_lock.read();
-        (context.euid, context.egid, context.ens)
+        (context.canonicalize(path), context.euid, context.egid, context.ens)
     };
 
     // split the path into two. The first part is the schema and the second part is the reference.
-    let mut parts = path.splitn(2, |&b| b == b':');
+    let mut parts = path_canonical.splitn(2, |&b| b == b':');
     let scheme_name_opt = parts.next();
     let reference_opt = parts.next();
 
