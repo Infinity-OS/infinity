@@ -1,2 +1,6 @@
-[target.x86_64-unknown-pulsar.dependencies]
+[target.x86_64-unknown-none.dependencies]
 collections = {}
+
+[target.x86_64-unknown-pulsar.dependencies.std]
+path = "rust/src/libstd"
+stage = 2

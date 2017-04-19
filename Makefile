@@ -13,8 +13,12 @@ include mk/config.mk
 # Include the configuration file
 -include config.mak
 
+# Filesystem
+include mk/initfs.mk
+
 arch ?= x86_64
 target ?= $(arch)-unknown-pulsar
+ktarget ?= $(arch)-unknown-none
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 
@@ -56,11 +60,11 @@ $(iso): $(kernel) $(grub_cfg)
 	@grub-mkrescue -o $(iso) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
-$(kernel): cargo $(rust_os) $(assembly_object_files) $(linker_script)
+$(kernel): cargo $(rust_os) $(assembly_object_files) $(linker_script) initfs.tag
 	@$(LD) $(LDFLAGS) -n --gc-sections -T $(linker_script) -o $(kernel) $(assembly_object_files) $(rust_os)
 
 cargo:
-	@xargo build --target $(target)
+	@xargo build --target $(ktarget)
 
 # compile assembly files
 build/arch/$(arch)/%.o: arch/$(arch)/assembly/%.asm

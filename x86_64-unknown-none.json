@@ -4,12 +4,8 @@
   "target-endian": "little",
   "target-pointer-width": "64",
   "arch": "x86_64",
-  "os": "pulsar",
-  "env": "",
-  "vendor": "unknown",
-  "target-family": "pulsar",
+  "os": "none",
   "linker-flavor": "gcc",
-  "executables": true,
-  "no-default-libraries": true,
-  "panic-strategy": "abort"
+  "features": "-mmx,-sse,+soft-float",
+  "disable-redzone": true
 }
