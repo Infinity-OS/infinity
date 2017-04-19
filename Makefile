@@ -14,7 +14,7 @@ include mk/config.mk
 -include config.mak
 
 arch ?= x86_64
-target ?= $(arch)-infinity_os
+target ?= $(arch)-unknown-pulsar
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 
