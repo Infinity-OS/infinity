@@ -22,7 +22,7 @@ ktarget ?= $(arch)-unknown-none
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 
-rust_os := target/$(target)/debug/libinfinity_os.a
+rust_os := target/$(ktarget)/debug/libinfinity_os.a
 linker_script := arch/$(arch)/linker.ld
 grub_cfg := arch/$(arch)/grub.cfg
 assembly_source_files := $(wildcard arch/$(arch)/assembly/*.asm)
