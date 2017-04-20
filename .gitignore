@@ -24,3 +24,6 @@ config.mak
 .sconsign.dblite
 
 infinity-w-initium.zip
+
+initfs/bin
+programs/*/target
