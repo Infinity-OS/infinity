@@ -30,4 +30,4 @@ notifications:
     on_failure: change
 
 script:
-  - ./configure.sh && make
+  - ./configure.sh && make all

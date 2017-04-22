@@ -7,7 +7,7 @@ d_init:
 
 # Build Infinity OS using the Docker toolchain
 d_make:
-	@docker run -t --rm -v "${PWD}:/code" infinity make
+	@docker run -t --rm -v "${PWD}:/code" infinity make all
 
 # Starts an interactive session
 d_inter:

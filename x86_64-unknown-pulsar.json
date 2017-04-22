@@ -8,8 +8,9 @@
   "env": "",
   "vendor": "unknown",
   "target-family": "pulsar",
-  "linker-flavor": "gcc",
   "executables": true,
+  "linker": "ld.lld",
+  "linker-flavor": "ld",
   "no-default-libraries": true,
   "panic-strategy": "abort"
 }
