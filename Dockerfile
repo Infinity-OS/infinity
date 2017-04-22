@@ -8,6 +8,7 @@ FROM ubuntu:16.04
 #   - xorriso
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    autoconf automake autotools-dev libtool xutils-dev \
     build-essential \
     ca-certificates \
     curl \
@@ -26,11 +27,11 @@ ENV PATH=/root/.cargo/bin:$PATH
 RUN rustup component add rust-src
 
 # Install Xargo
-COPY xargo.sh /
+COPY utils/xargo.sh /
 RUN bash /xargo.sh
 
 # Install LLVM.LLD
-COPY lld.sh /
+COPY utils/lld.sh /
 RUN bash /lld.sh
 
 # Define a volume and set the working directory
