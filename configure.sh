@@ -9,6 +9,22 @@
 # TODO:
 #  - parse arguments as options (--option=value)
 
+##########################################################
+# This function is simple a banner to introduce the script
+##########################################################
+banner ()
+{
+    echo "+----------------------------------------+"
+    echo "|-------- Welcome to Infinity OS --------|"
+    echo "+----------------------------------------+"
+}
+
+# Fetch Git submodules
+git submodule update --recursive --init
+
+# Show banner
+banner
+
 # Set the prefix parameter
 if [ -z "$1" ]; then
     prefix=

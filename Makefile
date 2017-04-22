@@ -16,6 +16,9 @@ include mk/config.mk
 # Filesystem
 include mk/initfs.mk
 
+# Docker
+include mk/docker.mk
+
 arch ?= x86_64
 target ?= $(arch)-unknown-pulsar
 ktarget ?= $(arch)-unknown-none
