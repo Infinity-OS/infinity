@@ -9,9 +9,13 @@
 
 ## Cloning, Building, and Running
 
-To build the Infinity OS you must have an Unix-Like host, and `nasm`, `grup-mkrescue`, `mformat` (including in `mtools`), `xorriso`, `qemu` and a nighly Rust compiler installed on your computer.
+Before you start running and mess around with this awesome project you must prepare your system. First of all, to build Infinity OS you need to have an Unix-Like host. Everything else depends on your preferred method to do that.
 
-### Manual Setup
+Down below, you can thing different ways of prepare or system. We recommend using docker, you that is up to you.
+
+### Cloning
+
+The code bellow is used to clone the project, as well download all required Git modules. Put it on a well-chosen place, and try not move it! 😉
 
 ```bash
 $ cd path/to/your/project/folder/
@@ -22,7 +26,22 @@ $ git clone https://github.com/Infinity-OS/infinity.git --origin upstream
 $ git clone git@github.com:Infinity-OS/infinity.git --origin upstream
 
 $ cd infinity/
+```
 
+### Method 1: Using Docket
+
+There are innumerous advantages in compiling Infinity OS using  Docker. When you use Docker, you don't need to prepare your system for compiling the OS, our image already contains everything that you need for. The only thing that you need installed on your host is Qemu and Docker, of course.
+
+```bash
+# Build the image
+$ docker build -t infinity .
+```
+
+### Method 2: Manual Setup
+
+Using this method you need to install the following packages on your system: `nasm`, `grup-mkrescue`, `mformat` (including in `mtools`), `xorriso`, `qemu` and a nighly Rust compiler installed on your computer.
+
+```bash
 # Configure
 $ ./configure [toolchain_prefix]
 
