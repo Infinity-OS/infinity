@@ -60,6 +60,19 @@ pub extern fn __rust_reallocate(ptr: *mut u8, size: usize, new_size: usize,
     new_ptr
 }
 
+#[no_mangle]
+pub extern fn __rust_allocate_zeroed(size: usize, _align: usize) -> *mut u8 {
+    use core::ptr;
+
+    // allocate the needed memory
+    let new_ptr = __rust_allocate(size, _align);
+
+    // zero the new allocated memory
+    unsafe { ptr::write_bytes(new_ptr, 0, size); }
+
+    new_ptr
+}
+
 #[test]
 fn it_works() {
 }
