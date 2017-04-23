@@ -9,7 +9,7 @@
   "vendor": "unknown",
   "target-family": "pulsar",
   "executables": true,
-  "linker": "ld.lld",
+  "linker": "ld",
   "linker-flavor": "ld",
   "no-default-libraries": true,
   "panic-strategy": "abort"
