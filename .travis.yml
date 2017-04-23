@@ -23,6 +23,7 @@ before_script:
   - (test -x $HOME/.cargo/bin/rustfmt || cargo install rustfmt)
   - (test -x $HOME/.cargo/bin/xargo || cargo install xargo)
   - cargo install-update -a
+  - bash utils/lld.sh
 
 notifications:
   email:
