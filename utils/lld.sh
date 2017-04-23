@@ -6,11 +6,11 @@ main() {
         curl
     )
 
-    apt-get update
+    sudo apt-get update
     local purge_list=()
     for dep in ${dependencies[@]}; do
         if ! dpkg -L $dep; then
-            apt-get install --no-install-recommends -y $dep
+            sudo apt-get install --no-install-recommends -y $dep
             purge_list+=( $dep )
         fi
     done
@@ -21,12 +21,12 @@ deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-4.0 main
 EOF
 
     curl -L http://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-    apt-get update
-    apt-get install --no-install-recommends -y lld-4.0
+    sudo apt-get update
+    sudo apt-get install --no-install-recommends -y lld-4.0
     ln -s ld.lld-4.0 /usr/bin/ld.lld
 
     # Clean up
-    apt-get purge --auto-remove -y ${purge_list[@]}
+    sudo apt-get purge --auto-remove -y ${purge_list[@]}
 
     rm $0
 }
