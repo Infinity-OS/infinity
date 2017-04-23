@@ -34,12 +34,20 @@ There are innumerous advantages in compiling Infinity OS using  Docker. When you
 
 ```bash
 # Build the image
-$ docker build -t infinity .
+$ make d_init
+
+# Run make command on the container
+$ make d_make
+
+# Start an interactive session
+$ make d_inter
 ```
 
 ### Method 2: Manual Setup
 
 Using this method you need to install the following packages on your system: `nasm`, `grup-mkrescue`, `mformat` (including in `mtools`), `xorriso`, `qemu` and a nighly Rust compiler installed on your computer.
+
+Please make sure you use the latest nightly of rustc before building. Otherwise, the build process can result in an error.
 
 ```bash
 # Configure
@@ -71,3 +79,5 @@ $ make debug
 # Start a debug session with Radare2
 $ make r2
 ```
+
+> Note: When using a MacOS it's needed a cross compiler to use the LD command. If you don't want do that you can try the first method, using Docker.

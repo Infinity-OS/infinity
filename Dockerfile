@@ -1,15 +1,22 @@
-# Use Ubuntu as a base image
-FROM ubuntu:16.04
+FROM base/archlinux
+
+RUN echo "[archlinuxfr]" >> /etc/pacman.conf && \
+    echo "SigLevel = Never" >> /etc/pacman.conf && \
+    echo "Server = http://repo.archlinux.fr/x86_64" >> /etc/pacman.conf &&\
+    pacman -Sy
+
+# Install Yaourt
+RUN pacman --sync --noconfirm --noprogressbar --quiet sudo yaourt
 
 # Install the following tools:
 #   - build-essential
 #   - grup-mkrescue
 #   - nasm
 #   - xorriso
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    autoconf automake autotools-dev libtool xutils-dev \
-    build-essential \
+RUN yaourt --noconfirm -Sa \
+    gcc make rustup \
+    autoconf autoconf automake libtool \
+    base-devel \
     ca-certificates \
     curl \
     git \
@@ -23,16 +30,17 @@ RUN curl https://sh.rustup.rs -sSf | \
 # Add cargo to PATH
 ENV PATH=/root/.cargo/bin:$PATH
 
+RUN source ~/.cargo/env
+
 # Add Rust source components
 RUN rustup component add rust-src
 
-# Install Xargo
-COPY utils/xargo.sh /
-RUN bash /xargo.sh
+RUN ~/.cargo/bin/cargo-install-update || cargo install cargo-update
+RUN ~/.cargo/bin/rustfmt || cargo install rustfmt
 
-# Install LLVM.LLD
-COPY utils/lld.sh /
-RUN bash /lld.sh
+# Install Xargo and force update
+RUN cargo install xargo
+RUN cargo install-update -a
 
 # Define a volume and set the working directory
 VOLUME ["/code"]
