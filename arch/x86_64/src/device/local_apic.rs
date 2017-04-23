@@ -2,7 +2,7 @@ use core::intrinsics::{volatile_load, volatile_store};
 use raw_cpuid::CpuId;
 use x86_64::registers::msr::*;
 
-use memory::{ActivePageTable, MemoryController, Frame};
+use memory::{MemoryController, Frame};
 use memory::paging::Page;
 use memory::paging::{VirtualAddress, PhysicalAddress};
 use memory::paging::entry;
@@ -107,11 +107,9 @@ impl LocalApic {
     /// The value of the ICR register.
     pub fn icr(&self) -> u64 {
         if self.x2_support {
-            unsafe { rdmsr(IA32_X2APIC_ICR) }
+            rdmsr(IA32_X2APIC_ICR)
         } else {
-            unsafe {
-                (self.read(APIC_REG_ICR_HIGH) as u64) << 32 | self.read(APIC_REG_ICR_LOW) as u64
-            }
+            (self.read(APIC_REG_ICR_HIGH) as u64) << 32 | self.read(APIC_REG_ICR_LOW) as u64
         }
     }
 
@@ -123,12 +121,10 @@ impl LocalApic {
         if self.x2_support {
             unsafe { wrmsr(IA32_X2APIC_ICR, value); }
         } else {
-            unsafe {
-                while self.read(APIC_REG_ICR_LOW) & 1 << 12 == 1 << 12 {}
-                self.write(APIC_REG_ICR_HIGH, (value >> 32) as u32);
-                self.write(APIC_REG_ICR_LOW, value as u32);
-                while self.read(APIC_REG_ICR_LOW) & 1 << 12 == 1 << 12 { }
-            }
+            while self.read(APIC_REG_ICR_LOW) & 1 << 12 == 1 << 12 {}
+            self.write(APIC_REG_ICR_HIGH, (value >> 32) as u32);
+            self.write(APIC_REG_ICR_LOW, value as u32);
+            while self.read(APIC_REG_ICR_LOW) & 1 << 12 == 1 << 12 { }
         }
     }
 
@@ -165,15 +161,13 @@ impl LocalApic {
 
     /// Enable timer.
     pub fn enable_timer(&mut self) {
-        unsafe {
-            // Set the divider amount
-            self.write(APIC_REG_TIMER_DIVIDE, 0x3);
+        // Set the divider amount
+        self.write(APIC_REG_TIMER_DIVIDE, 0x3);
 
-            // Set the start count value
-            self.write(APIC_REG_TIMER_INIT_COUNT, 0x10000);
+        // Set the start count value
+        self.write(APIC_REG_TIMER_INIT_COUNT, 0x10000);
 
-            // Enable the time interrupt
-            self.write(APIC_REG_TIMER_LOCAL_VECTOR, (1<<17) | 0x40);
-        }
+        // Enable the time interrupt
+        self.write(APIC_REG_TIMER_LOCAL_VECTOR, (1<<17) | 0x40);
     }
 }

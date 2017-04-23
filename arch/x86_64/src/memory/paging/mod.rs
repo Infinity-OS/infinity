@@ -170,7 +170,7 @@ impl ActivePageTable {
     pub fn flush_all(&mut self) {
         use x86_64::instructions::tlb;
 
-        unsafe { tlb::flush_all(); }
+        tlb::flush_all();
     }
 
     /// Get the CR3 address.
@@ -243,8 +243,6 @@ unsafe fn init_tcb(cpu_id: usize) -> usize {
 pub unsafe fn remap_the_kernel<A>(cpu_id: usize, allocator: &mut A, boot_info: &BootInformation) -> (ActivePageTable, usize)
     where A: FrameAllocator
 {
-    use core::ops::Range;
-
     // get the external data segments
     extern {
         /// The starting byte of the text (code) data segment.
@@ -275,7 +273,7 @@ pub unsafe fn remap_the_kernel<A>(cpu_id: usize, allocator: &mut A, boot_info: &
 
     let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe }, allocator);
 
-    let mut active_table = unsafe { ActivePageTable::new() };
+    let mut active_table = ActivePageTable::new();
     let mut new_table = {
         let frame = allocator.allocate_frame().expect("no more frames");
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)

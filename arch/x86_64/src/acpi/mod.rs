@@ -5,7 +5,7 @@
 
 use spin::Mutex;
 
-use memory::{ActivePageTable, MemoryController, Frame};
+use memory::{MemoryController, Frame};
 use memory::paging::Page;
 use memory::paging::{VirtualAddress, PhysicalAddress};
 use memory::paging::entry;
@@ -105,7 +105,7 @@ pub fn init(memory_controller: &mut MemoryController) {
 
         for frame in Frame::range_inclusive(start_frame, end_frame) {
             let page = Page::containing_address(frame.start_address());
-            let result = memory_controller.map_to(page, frame, entry::PRESENT | entry::NO_EXECUTE);
+            memory_controller.map_to(page, frame, entry::PRESENT | entry::NO_EXECUTE);
 
             // flush TLB
             // TODO Flushing TLB is really expensive, can we do this after mapping all pages?

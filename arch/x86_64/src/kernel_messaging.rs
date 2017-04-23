@@ -39,9 +39,6 @@ pub fn kprint(message_type: MessageType, message: &str) {
         MessageType::DEFAULT => {
             vga_buffer::WRITER.lock().set_color_code(DEFAULT_COLOR_CODE);
         }
-        _ => {
-            panic!("That message type doesn't exist.")
-        }
     }
     println!("{}", message);
     restore_defauls();
