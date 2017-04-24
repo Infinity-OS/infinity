@@ -28,7 +28,7 @@ pub struct Context {
     /// a creation of another object. This can be seen as the PID.
     pub id: ContextId,
     /// This is the ID from the owner process that spawn this object.
-    pub parentId: ContextId,
+    pub ppid: ContextId,
     /// The real user id
     pub ruid: u32,
     /// The real group id
@@ -53,6 +53,8 @@ pub struct Context {
     pub kfx: Option<Box<[u8]>>,
     /// Stores the kernel stack.
     pub kstack: Option<Box<[u8]>>,
+    /// Executable image
+    pub image: Vec<SharedMemory>,
     /// User heap.
     pub heap: Option<SharedMemory>,
     /// User stack.
@@ -73,7 +75,7 @@ impl Context {
     pub fn new(id: ContextId) -> Context {
         Context {
             id: id,
-            parentId: ContextId::from(0),
+            ppid: ContextId::from(0),
             ruid: 0,
             rgid: 0,
             rns: SchemeNamespace::from(0),
@@ -86,6 +88,7 @@ impl Context {
             arch: ::arch::context::Context::new(),
             kfx: None,
             kstack: None,
+            image: Vec::new(),
             heap: None,
             stack: None,
             name: Arc::new(Mutex::new(Vec::new())),

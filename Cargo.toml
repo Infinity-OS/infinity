@@ -7,11 +7,16 @@ build = "build.rs"
 [dependencies]
 bit_field = "0.7.0"
 bitflags = "0.8.2"
-spin = "0.4.5"
 infinity_syscall = { path = "libs/syscall" }
+spin = "0.4.5"
 
 [dependencies.arch_x86_64]
 path = "arch/x86_64"
+
+[dependencies.goblin]
+version = "0.0.9"
+default-features = false
+features = ["elf64"]
 
 [lib]
 crate-type = ["staticlib"]

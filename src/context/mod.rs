@@ -19,7 +19,7 @@ mod file;
 mod list;
 
 /// Memory logic for the Context
-mod memory;
+pub mod memory;
 
 /// Scheduler function.
 mod switch;

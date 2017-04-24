@@ -72,6 +72,11 @@ impl Memory {
         Page::range_inclusive(start_page, end_page)
     }
 
+    /// Convert this memory zone to a shared one.
+    pub fn to_shared(self) -> SharedMemory {
+        SharedMemory::Owned(Arc::new(Mutex::new(self)))
+    }
+
     /// Map a new space on the virtual memory for this memory zone.
     fn map(&mut self, clean: bool) {
         // create a new active page table
@@ -82,6 +87,27 @@ impl Memory {
             for page in self.pages() {
                 memory_controller.map(&mut active_table, page, self.flags);
             }
+        } else {
+            panic!("Memory controller required");
+        }
+    }
+
+    /// Remap a memory area to another region
+    pub fn remap(&mut self, new_flags: EntryFlags) {
+        // create a new page table
+        let mut active_table = unsafe { ActivePageTable::new() };
+
+        // get memory controller
+        if let Some(ref mut memory_controller) = *::MEMORY_CONTROLLER.lock() {
+            // remap all pages
+            for page in self.pages() {
+                memory_controller.remap(&mut active_table, page, new_flags);
+            }
+
+            // flush TLB
+            memory_controller.flush_all();
+
+            self.flags = new_flags;
         } else {
             panic!("Memory controller required");
         }

@@ -5,6 +5,7 @@
 #![feature(const_fn)]
 #![feature(drop_types_in_const)]
 #![feature(heap_api)]
+#![feature(core_intrinsics)]
 #![feature(thread_local)]
 #![no_std]
 
@@ -16,6 +17,7 @@ extern crate arch_x86_64 as arch;
 extern crate alloc;
 #[macro_use]
 extern crate collections;
+extern crate goblin;
 extern crate spin;
 
 use arch::memory::MemoryController;
@@ -27,6 +29,9 @@ use spin::Mutex;
 pub mod common;
 
 pub mod context;
+
+/// ELF module
+pub mod elf;
 
 /// Scheme module
 pub mod scheme;
@@ -40,17 +45,38 @@ static MEMORY_CONTROLLER: Mutex<Option<&'static mut MemoryController>> = Mutex::
 /// A unique number that identifies the current CPU - used for scheduling.
 static CPU_ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
+/// The size of a single PML4
+pub const PML4_SIZE: usize = 0x0000_0080_0000_0000;
+
+/// Offset to user image
+pub const USER_OFFSET: usize = 0;
+
+/// Offset to user heap
+pub const USER_HEAP_OFFSET: usize = USER_OFFSET + PML4_SIZE;
+
+/// Offset to user stack
+pub const USER_STACK_OFFSET: usize = USER_GRANT_OFFSET + PML4_SIZE;
+
+/// Offset to user grants
+pub const USER_GRANT_OFFSET: usize = USER_HEAP_OFFSET + PML4_SIZE;
+
+/// Size of user stack
+pub const USER_STACK_SIZE: usize = 1024 * 1024; // 1 MB
+
 /// Get the current CPU's scheduling ID.
 pub fn cpu_id() -> usize {
     CPU_ID.load(Ordering::Relaxed)
 }
 
+/// Initialize userspace by running the initfs:bin/init process
 pub extern fn userspace_init() {
     // change dir for the init FS
     assert_eq!(syscall::chdir(b"initfs:"), Ok(0));
 
-    println!("Hello from a context!");
-    loop {}
+    // start the first program
+    syscall::exec(b"/bin/init", &[]).expect("failed to execute init");
+
+    panic!("init returned");
 }
 
 /// This is the kernel entry point for the primary CPU. The arch crate is responsible for calling

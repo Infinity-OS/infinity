@@ -63,6 +63,8 @@ impl fmt::Display for Error {
 pub const ENOENT: i32 = 2;
 /// No such process
 pub const ESRCH: i32 = 3;
+/// Exec format error
+pub const ENOEXEC: i32 = 8;
 /// Bad file number
 pub const EBADF: i32 = 9;
 /// Bad address
@@ -88,7 +90,7 @@ pub static STR_STATE: [&'static str; 39] = [
     "",
     "",
     "",
-    "",
+    "Exec format error",
     "Bad file number",
     "",
     "",

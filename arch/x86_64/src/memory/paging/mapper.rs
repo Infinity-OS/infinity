@@ -90,6 +90,21 @@ impl Mapper {
         self.map_to(page, frame, flags, allocator)
     }
 
+    /// Update flags for a page
+    pub fn remap(&mut self, page: Page, flags: EntryFlags) {
+        use x86_64::instructions::tlb;
+        use x86_64::VirtualAddress;
+
+        let mut p3 = self.p4_mut().next_table_mut(page.p4_index()).expect("Failed to remap: no p3");
+        let mut p2 = p3.next_table_mut(page.p3_index()).expect("Failed to remap: no p2");
+        let mut p1 = p2.next_table_mut(page.p2_index()).expect("Failed to remap: no p1");
+        let frame = p1[page.p1_index()].pointed_frame().expect("Failed to remap: not mapped");
+        p1[page.p1_index()].set(frame, flags | PRESENT);
+
+        // Flush page TLB
+        tlb::flush(VirtualAddress(page.start_address()));
+    }
+
     /// Identity map the given frame with the provided flags.
     /// The `FrameAllocator` is used to create new page tables if needed.
     pub fn identity_map<A>(&mut self, frame: Frame, flags: EntryFlags, allocator: &mut A)

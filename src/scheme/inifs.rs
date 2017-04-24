@@ -78,4 +78,25 @@ impl Scheme for InitFsScheme {
 
         Ok(0)
     }
+
+    fn read(&self, id: usize, buffer: &mut [u8]) -> Result<usize> {
+        // get the file descriptor
+        let mut handlers = self.handles.write();
+        let mut handle = handlers.get_mut(&id).ok_or(Error::new(EBADF))?;
+
+        // Read all the content from the file
+        let mut i = 0;
+        while i < buffer.len() && handle.seek < handle.data.len() {
+            buffer[i] = handle.data[handle.seek];
+            i += 1;
+            handle.seek += 1;
+        }
+
+        // return the size of the date read
+        Ok(i)
+    }
+
+    fn close(&self, id: usize) -> Result<usize> {
+        self.handles.write().remove(&id).ok_or(Error::new(EBADF)).and(Ok(0))
+    }
 }

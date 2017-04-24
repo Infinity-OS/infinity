@@ -229,6 +229,11 @@ impl MemoryController {
         active_table.map(page, flags, &mut self.frame_allocator);
     }
 
+    /// Update flags for a page
+    pub fn remap(&mut self, active_table: &mut ActivePageTable, page: paging::Page, flags: paging::entry::EntryFlags) {
+        active_table.remap(page, flags)
+    }
+
     /// Flush the TLB table
     pub fn flush_all(&mut self) {
         self.active_table.flush_all();
