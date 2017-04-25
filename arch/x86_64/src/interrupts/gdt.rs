@@ -8,14 +8,14 @@ use x86_64::structures::gdt::SegmentSelector;
 use x86_64::PrivilegeLevel;
 
 pub struct Gdt {
-    table: [u64; 8],
+    table: [u64; 9],
     next_free: usize,
 }
 
 impl Gdt {
     pub fn new() -> Gdt {
         Gdt {
-            table: [0; 8],
+            table: [0; 9],
             next_free: 1
         }
     }
@@ -31,6 +31,20 @@ impl Gdt {
             }
         };
         SegmentSelector::new(index as u16, PrivilegeLevel::Ring0)
+    }
+
+    /// Add a new entry to the GDT
+    pub fn add_entry_user(&mut self, entry: Descriptor) -> SegmentSelector {
+        let index = match entry {
+            Descriptor::UserSegment(value) => self.push(value),
+            Descriptor::SystemSegment(value_low, value_high) => {
+                let index = self.push(value_low);
+                self.push(value_high);
+                index
+            }
+        };
+        let new_seg = SegmentSelector::new(index as u16, PrivilegeLevel::Ring3);
+        new_seg
     }
 
     /// This is used to control the number of entries on the GDT table.
@@ -120,6 +134,36 @@ impl Descriptor {
 
         Descriptor::SystemSegment(low, high)
     }
+
+    /// Creates an user mode code segment
+    pub fn user_code_segment() -> Descriptor {
+        let flags = USER_SEGMENT | PRESENT | EXECUTABLE | LONG_MODE | RING_3;
+        Descriptor::UserSegment(flags.bits())
+    }
+
+    /// Creates an user mode data segment
+    pub fn user_data_segment() -> Descriptor {
+        let flags = USER_SEGMENT | PRESENT | LONG_MODE | RING_3;
+        Descriptor::UserSegment(flags.bits())
+    }
+
+    /// Creates an user mode TLS segment
+    pub fn user_thread_local_segment(offset: usize) -> Descriptor {
+        use bit_field::BitField;
+
+        // set the descriptor flags
+        let flags = USER_SEGMENT | PRESENT | LONG_MODE | RING_3;
+
+        // get the bytes
+        let mut bits = flags.bits();
+
+        // set the offset
+        let off = offset as u64;
+        bits.set_bits(16..40, off.get_bits(0..24));
+        bits.set_bits(56..64, off.get_bits(24..32));
+
+        Descriptor::UserSegment(bits)
+    }
 }
 
 bitflags! {
@@ -127,6 +171,7 @@ bitflags! {
         const CONFORMING        = 1 << 42,
         const EXECUTABLE        = 1 << 43,
         const USER_SEGMENT      = 1 << 44,
+        const RING_3            = 3 << 5,
         const PRESENT           = 1 << 47,
         const LONG_MODE         = 1 << 53,
     }

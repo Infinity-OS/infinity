@@ -1,4 +1,4 @@
 pub fn main() {
-    printl!("Hellow from the userland!");
+    println!("Hello, from the userland!");
     loop {}
 }

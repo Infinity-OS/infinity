@@ -21,6 +21,7 @@ lazy_static! {
         let mut idt = Idt::new();
 
         // Set up exceptions
+        // Set up exceptions
         idt.divide_by_zero.set_handler_fn(exceptions::divide_by_zero);
         idt.debug.set_handler_fn(exceptions::debug);
         idt.non_maskable_interrupt.set_handler_fn(exceptions::non_maskable);
@@ -89,17 +90,27 @@ pub fn init(memory_controller: &mut MemoryController, tcb_offset: usize) {
     let mut tss_selector = SegmentSelector(0);
     let gdt = GDT.call_once(|| {
         let mut gdt = gdt::Gdt::new();
-        // setup the kernel code segment
+        // 1. setup the kernel code segment
         code_selector = gdt.add_entry(gdt::Descriptor::kernel_code_segment());
 
-        // setup the kernel data segment
+        // 2. setup the kernel data segment
         data_selector = gdt.add_entry(gdt::Descriptor::kernel_data_segment());
 
-        // setup the thread local segment
+        // 3. setup the thread local segment
         tls_selector = gdt.add_entry(gdt::Descriptor::thread_local_segment(tcb_offset));
 
-        // setup the TSS segment
+        // 4. User code
+        gdt.add_entry_user(gdt::Descriptor::user_code_segment());
+
+        // 5. User data
+        gdt.add_entry_user(gdt::Descriptor::user_data_segment());
+
+        // 6. User TLS
+        gdt.add_entry_user(gdt::Descriptor::user_thread_local_segment(::USER_TCB_OFFSET));
+
+        // 7/8. setup the TSS segment
         tss_selector = gdt.add_entry(gdt::Descriptor::tss_segment(&tss));
+
         gdt
     });
     gdt.load();

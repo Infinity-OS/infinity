@@ -6,6 +6,7 @@ use collections::Vec;
 use core::{intrinsics, mem, str};
 use spin::Mutex;
 
+use arch::usermode;
 use context;
 use elf;
 use elf::program_header;
@@ -152,6 +153,5 @@ pub fn exec(path: &[u8], arg_ptrs: &[[usize; 2]]) -> Result<usize> {
     }
 
     // TODO go to userland
-    // unsafe { arch::usermode(entry, sp); }
-    Err(Error::new(ENOEXEC))
+    unsafe { usermode(entry, sp); }
 }
