@@ -171,7 +171,7 @@ bitflags! {
         const CONFORMING        = 1 << 42,
         const EXECUTABLE        = 1 << 43,
         const USER_SEGMENT      = 1 << 44,
-        const RING_3            = 3 << 5,
+        const RING_3            = 3 << 45,
         const PRESENT           = 1 << 47,
         const LONG_MODE         = 1 << 53,
     }
