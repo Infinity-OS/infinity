@@ -28,7 +28,7 @@ $ git clone git@github.com:Infinity-OS/infinity.git --origin upstream
 $ cd infinity/
 ```
 
-### Method 1: Using Docket
+### Method 1: Using Docker
 
 There are innumerous advantages in compiling Infinity OS using  Docker. When you use Docker, you don't need to prepare your system for compiling the OS, our image already contains everything that you need for. The only thing that you need installed on your host is Qemu and Docker, of course.
 
